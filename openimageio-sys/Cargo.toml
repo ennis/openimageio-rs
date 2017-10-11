@@ -1,0 +1,13 @@
+[package]
+name = "openimageio-sys"
+version = "0.1.0"
+authors = ["Alexandre Bléron <alex.bleron@gmail.com>"]
+build = "build.rs"
+
+[dependencies]
+
+[build-dependencies]
+vcpkg = "*"
+pkg-config = "*"
+bindgen = "*"
+gcc = "*"
