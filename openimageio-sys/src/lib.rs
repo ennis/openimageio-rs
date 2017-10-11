@@ -1,9 +1,11 @@
+extern crate libc;
 use std::os::raw::*;
 use std::ptr;
 use std::ffi::CString;
 
 pub enum ImageSpec {}
 pub enum ImageInput {}
+pub enum ImageOutput {}
 
 #[link(name="wrapper", kind="static")]
 extern {
@@ -64,8 +66,24 @@ extern {
 
     // Error handling
     pub fn COIIO_geterror(buf: *mut c_char, bufsize: c_int) -> c_int;
+
+    // ImageOutput
+    pub fn COIIO_ImageOutput_create(filename: *const c_char, plugin_searchpath: *const c_char) -> *mut ImageOutput;
+    pub fn COIIO_ImageOutput_open(this_: *mut ImageOutput, filename: *const c_char, spec: *const ImageSpec, mode: ImageOutput_OpenMode) -> bool;
+    pub fn COIIO_ImageOutput_open_with_subimages(this_: *mut ImageOutput, filename: *const c_char, num_subimages: c_int, subimage_specs: *const ImageSpec) -> bool;
+    pub fn COIIO_ImageOutput_supports(this_: *const ImageOutput, feature: *const c_char) -> c_int;
+    pub fn COIIO_ImageOutput_write_image(this_: *mut ImageOutput, format: *const TypeDesc, xstride: libc::ptrdiff_t, ystride: libc::ptrdiff_t, zstride: libc::ptrdiff_t) -> bool;
+    pub fn COIIO_ImageOutput_close(this_: *mut ImageOutput) -> bool;
+    pub fn COIIO_ImageOutput_destroy(imageout: *mut ImageOutput);
 }
 
+#[repr(C)]
+pub enum ImageOutput_OpenMode
+{
+    Create = 0,
+    AppendSubimage,
+    AppendMIPLevel
+}
 
 #[repr(u8)]
 pub enum Basetype {

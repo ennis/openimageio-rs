@@ -21,15 +21,21 @@ void COIIO_ImageSpec_set_y(OIIO::ImageSpec *this_, int y) { this_->y = y; }
 int COIIO_ImageSpec_z(const OIIO::ImageSpec *this_) { return this_->z; }
 void COIIO_ImageSpec_set_z(OIIO::ImageSpec *this_, int z) { this_->z = z; }
 
-int COIIO_ImageSpec_full_x(const OIIO::ImageSpec *this_) { return this_->full_x; }
+int COIIO_ImageSpec_full_x(const OIIO::ImageSpec *this_) {
+  return this_->full_x;
+}
 void COIIO_ImageSpec_set_full_x(OIIO::ImageSpec *this_, int x) {
   this_->full_x = x;
 }
-int COIIO_ImageSpec_full_y(const OIIO::ImageSpec *this_) { return this_->full_y; }
+int COIIO_ImageSpec_full_y(const OIIO::ImageSpec *this_) {
+  return this_->full_y;
+}
 void COIIO_ImageSpec_set_full_y(OIIO::ImageSpec *this_, int y) {
   this_->full_y = y;
 }
-int COIIO_ImageSpec_full_z(const OIIO::ImageSpec *this_) { return this_->full_z; }
+int COIIO_ImageSpec_full_z(const OIIO::ImageSpec *this_) {
+  return this_->full_z;
+}
 void COIIO_ImageSpec_set_full_z(OIIO::ImageSpec *this_, int z) {
   this_->full_z = z;
 }
@@ -38,7 +44,9 @@ int COIIO_ImageSpec_width(const OIIO::ImageSpec *this_) { return this_->width; }
 void COIIO_ImageSpec_set_width(OIIO::ImageSpec *this_, int width) {
   this_->width = width;
 }
-int COIIO_ImageSpec_height(const OIIO::ImageSpec *this_) { return this_->height; }
+int COIIO_ImageSpec_height(const OIIO::ImageSpec *this_) {
+  return this_->height;
+}
 void COIIO_ImageSpec_set_height(OIIO::ImageSpec *this_, int height) {
   this_->height = height;
 }
@@ -130,10 +138,47 @@ bool COIIO_ImageInput_read_image(OIIO::ImageInput *this_,
   return this_->read_image(*format, data);
 }
 
-int COIIO_geterror(char* buf, int bufsize)
-{
-	auto msg = OIIO::geterror();
-	if (buf) 
-		std::copy_n(msg.begin(), std::min(bufsize, (int)msg.size()), buf);
-	return msg.size();
+int COIIO_geterror(char *buf, int bufsize) {
+  auto msg = OIIO::geterror();
+  if (buf)
+    std::copy_n(msg.begin(), std::min(bufsize, (int)msg.size()), buf);
+  return msg.size();
+}
+
+// ImageOutput
+OIIO::ImageOutput *COIIO_ImageOutput_create(const char *filename,
+                                            const char *plugin_searchpath) {
+  return OIIO::ImageOutput::create(filename, plugin_searchpath);
+}
+
+bool COIIO_ImageOutput_open(
+    OIIO::ImageOutput *this_, const char *filename, const OIIO::ImageSpec *spec,
+    OIIO::ImageOutput::OpenMode mode) {
+  return this_->open(filename, *spec, mode);
+}
+
+bool COIIO_ImageOutput_open_with_subimages(
+    OIIO::ImageOutput *this_, const char *filename, int num_subimages,
+    const OIIO::ImageSpec *subimage_specs) {
+  return this_->open(filename, num_subimages, subimage_specs);
+}
+
+int COIIO_ImageOutput_supports(const OIIO::ImageOutput *this_,
+                               const char *feature) {
+  return this_->supports(feature);
+}
+
+bool COIIO_ImageOutput_write_image(OIIO::ImageOutput *this_,
+                                   const OIIO::TypeDesc *format,
+                                   const void *data, ptrdiff_t xstride,
+                                   ptrdiff_t ystride, ptrdiff_t zstride) {
+  return this_->write_image(*format, data, xstride, ystride, zstride);
+}
+
+bool COIIO_ImageOutput_close(OIIO::ImageOutput *this_) {
+  return this_->close();
+}
+
+void COIIO_ImageOutput_destroy(OIIO::ImageOutput *imageout) {
+  OIIO::ImageOutput::destroy(imageout);
 }

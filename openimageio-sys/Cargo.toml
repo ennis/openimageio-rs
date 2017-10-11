@@ -5,6 +5,7 @@ authors = ["Alexandre Bléron <alex.bleron@gmail.com>"]
 build = "build.rs"
 
 [dependencies]
+libc = "*"
 
 [build-dependencies]
 vcpkg = "*"
