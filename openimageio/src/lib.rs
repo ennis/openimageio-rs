@@ -45,14 +45,38 @@ fn get_last_error() -> String {
     }
 }
 
+// Options:
+// - safe wrapper over raw ImageSpec, all properties are functions
+//      - function call overhead
+//      - cloning is expensive (C heap allocation)
+// - struct converted on-the-fly at creation time
+//      - additional space rust-side
+//      - easier to handle
+//      - each query must allocate an imagespec on the heap before calling ffi
+// - go with opaque
+// - imagespec builder?
 pub struct ImageSpec
 {
-    ptr: *mut openimageio_sys::ImageOutput
+    ptr: *mut openimageio_sys::ImageSpec
 }
 
 impl ImageSpec {
-    pub fn new_2d(typedesc: TypeDesc, width: u32, height: u32) -> ImageSpec {
-        unimplemented!()
+    pub fn new_2d(typedesc: &TypeDesc, xres: u32, yres: u32, num_channels: u32) -> ImageSpec {
+        let ptr = unsafe {
+            openimageio_sys::COIIO_ImageSpec_new_2D(xres as c_int,yres as c_int, num_channels as c_int, typedesc as *const TypeDesc)
+        };
+
+        ImageSpec {
+            ptr
+        }
+    }
+}
+
+impl Drop for ImageSpec {
+    fn drop(&mut self) {
+        unsafe {
+            openimageio_sys::COIIO_ImageSpec_delete(self.ptr);
+        }
     }
 }
 
@@ -67,7 +91,7 @@ impl ImageInput {
         let imginput = unsafe {
             openimageio_sys::COIIO_ImageInput_open(path_cstr.as_ptr(), ptr::null())
         };
-        if imginput == ptr::null_mut() {
+        if imginput.is_null() {
             Err(Error::OpenError(get_last_error()))
         } else {
             Ok(ImageInput {
@@ -89,11 +113,56 @@ pub struct ImageOutput {
     ptr: *mut openimageio_sys::ImageOutput
 }
 
+pub struct SubimageOutput<'a> {
+    parent: &'a mut ImageOutput
+}
+
 impl ImageOutput {
-    pub fn create<P: AsRef<Path>>(path: P, openmode: OpenMode) -> Result<ImageOutput, Error> {
+
+    // Open or create an imageoutput
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<ImageOutput, Error> {
        unimplemented!()
     }
+
+    // Open a subimage
+    // May fail if spec is not supported
+    // Mut-borrows the subimage so that you can't open more than one at a time
+    pub fn open_subimage<'a>(&'a mut self, spec: &ImageSpec) -> Result<SubimageOutput<'a>,Error> {
+        unimplemented!()
+    }
+
+    // Open subimages
+    // For formats that do not support appending subimages
+    // Should return an iterator or something, or pass a closure, maybe
+    pub fn open_subimages<'a>(&'a mut self, specs: &[ImageSpec]) -> ! {
+        unimplemented!()
+    }
 }
+
+impl<'a> SubimageOutput<'a> {
+    pub fn write_image(&self) -> Result<(),Error> {
+        unimplemented!()
+    }
+
+    // TODO write scanline
+
+    // finish writing to this subimage (and release the borrow)
+    pub fn close(self) {
+        unimplemented!()
+    }
+}
+
+// use-case
+// open file with specs, write one image, close
+// open file with specs, write multiple images, close
+// open file, append image, close
+// An imageoutput must be ready to write
+//
+// Open existing image for appending or modification
+//   open(Existing), append_subimage(spec) -> SubimageWriter, modify_subimage(spec)
+// OR create(path), open(spec) -> SubimageWriter,
+// Create new (empty) image, append images
+//   create(path), open(spec, Create)
 
 #[cfg(test)]
 mod tests {
