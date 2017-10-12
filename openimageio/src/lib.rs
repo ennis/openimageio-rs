@@ -8,6 +8,8 @@ use std::fmt;
 use std::os::raw::*;
 
 pub use openimageio_sys::{TypeDesc, AggregateKind, VecSemantics};
+use openimageio_sys::ImageOutput_OpenMode;
+pub type OpenMode = ImageOutput_OpenMode;
 
 #[derive(Clone,Debug)]
 pub enum Error {
@@ -43,6 +45,17 @@ fn get_last_error() -> String {
     }
 }
 
+pub struct ImageSpec
+{
+    ptr: *mut openimageio_sys::ImageOutput
+}
+
+impl ImageSpec {
+    pub fn new_2d(typedesc: TypeDesc, width: u32, height: u32) -> ImageSpec {
+        unimplemented!()
+    }
+}
+
 pub struct ImageInput
 {
     ptr: *mut openimageio_sys::ImageInput
@@ -69,6 +82,16 @@ impl Drop for ImageInput {
         unsafe {
             openimageio_sys::COIIO_ImageInput_destroy(self.ptr);
         }
+    }
+}
+
+pub struct ImageOutput {
+    ptr: *mut openimageio_sys::ImageOutput
+}
+
+impl ImageOutput {
+    pub fn create<P: AsRef<Path>>(path: P, openmode: OpenMode) -> Result<ImageOutput, Error> {
+       unimplemented!()
     }
 }
 
