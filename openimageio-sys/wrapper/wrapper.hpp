@@ -1,6 +1,7 @@
 #include <OpenImageIO/imageio.h>
 
 extern "C" {
+
 OIIO::ImageSpec *COIIO_ImageSpec_new(const OIIO::TypeDesc *format);
 OIIO::ImageSpec *COIIO_ImageSpec_new_2D(int xres, int yres, int nchans,
                                         const OIIO::TypeDesc *fmt);
@@ -56,14 +57,16 @@ void COIIO_ImageInput_destroy(OIIO::ImageInput *input);
 const OIIO::ImageSpec *COIIO_ImageInput_spec(const OIIO::ImageInput *this_);
 bool COIIO_ImageInput_read_image(OIIO::ImageInput *this_,
                                  const OIIO::TypeDesc *format, void *data);
+const char *COIIO_ImageInput_geterror(OIIO::ImageInput *this_);
+
 // global error handling
-int COIIO_geterror(char *buf, int bufsize);
+const char *COIIO_geterror();
 // ImageOutput
 OIIO::ImageOutput *COIIO_ImageOutput_create(const char *filename,
                                             const char *plugin_searchpath);
-bool COIIO_ImageOutput_open(
-    OIIO::ImageOutput *this_, const char *filename, const OIIO::ImageSpec *spec,
-    OIIO::ImageOutput::OpenMode mode);
+bool COIIO_ImageOutput_open(OIIO::ImageOutput *this_, const char *filename,
+                            const OIIO::ImageSpec *spec,
+                            OIIO::ImageOutput::OpenMode mode);
 bool COIIO_ImageOutput_open_with_subimages(
     OIIO::ImageOutput *this_, const char *filename, int num_subimages,
     const OIIO::ImageSpec *subimage_specs);
@@ -75,4 +78,8 @@ bool COIIO_ImageOutput_write_image(OIIO::ImageOutput *this_,
                                    ptrdiff_t ystride, ptrdiff_t zstride);
 bool COIIO_ImageOutput_close(OIIO::ImageOutput *this_);
 void COIIO_ImageOutput_destroy(OIIO::ImageOutput *imageout);
+const char *COIIO_ImageOutput_geterror(OIIO::ImageOutput *this_);
+
+// std::string wrapper
+void COIIO_delete_cstring(const char* ptr);
 }

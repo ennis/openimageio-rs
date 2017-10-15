@@ -3,6 +3,13 @@
 #include <OpenImageIO/typedesc.h>
 #include <algorithm>
 
+const char* stdStringToCharArray(std::string str)
+{
+	char *chars = new char[str.size() + 1];
+	strncpy(chars, str.c_str(), str.size() + 1);
+	return chars;
+}
+
 OIIO::ImageSpec *COIIO_ImageSpec_new(OIIO::TypeDesc format) {
   return new OIIO::ImageSpec(format);
 }
@@ -138,12 +145,20 @@ bool COIIO_ImageInput_read_image(OIIO::ImageInput *this_,
   return this_->read_image(*format, data);
 }
 
-int COIIO_geterror(char *buf, int bufsize) {
+const char *COIIO_ImageInput_geterror(OIIO::ImageInput *this_) {
+	return stdStringToCharArray(this_->geterror());
+}
+
+const char *COIIO_geterror() {
+  return stdStringToCharArray(OIIO::geterror());
+}
+
+/*int COIIO_geterror(char *buf, int bufsize) {
   auto msg = OIIO::geterror();
   if (buf)
     std::copy_n(msg.begin(), std::min(bufsize, (int)msg.size()), buf);
   return msg.size();
-}
+}*/
 
 // ImageOutput
 OIIO::ImageOutput *COIIO_ImageOutput_create(const char *filename,
@@ -151,9 +166,9 @@ OIIO::ImageOutput *COIIO_ImageOutput_create(const char *filename,
   return OIIO::ImageOutput::create(filename, plugin_searchpath);
 }
 
-bool COIIO_ImageOutput_open(
-    OIIO::ImageOutput *this_, const char *filename, const OIIO::ImageSpec *spec,
-    OIIO::ImageOutput::OpenMode mode) {
+bool COIIO_ImageOutput_open(OIIO::ImageOutput *this_, const char *filename,
+                            const OIIO::ImageSpec *spec,
+                            OIIO::ImageOutput::OpenMode mode) {
   return this_->open(filename, *spec, mode);
 }
 
@@ -182,3 +197,9 @@ bool COIIO_ImageOutput_close(OIIO::ImageOutput *this_) {
 void COIIO_ImageOutput_destroy(OIIO::ImageOutput *imageout) {
   OIIO::ImageOutput::destroy(imageout);
 }
+
+const char *COIIO_ImageOutput_geterror(OIIO::ImageOutput *this_) {
+	return stdStringToCharArray(this_->geterror());
+}
+
+void COIIO_delete_cstring(const char *ptr) { delete [] ptr; }

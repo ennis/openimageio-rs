@@ -6,6 +6,7 @@ use std::ffi::CString;
 pub enum ImageSpec {}
 pub enum ImageInput {}
 pub enum ImageOutput {}
+pub enum StdStringWrapper {}
 
 #[link(name="wrapper", kind="static")]
 extern {
@@ -63,9 +64,10 @@ extern {
     pub fn COIIO_ImageInput_destroy(input: *mut ImageInput);
     pub fn COIIO_ImageInput_spec(this_: *const ImageInput) -> *const ImageSpec;
     pub fn COIIO_ImageInput_read_image(this_: *const ImageInput, format: TypeDesc, data: *mut c_void) -> bool;
+    pub fn COIIO_ImageInput_geterror(this_: *mut ImageInput) -> *const c_char;
 
     // Error handling
-    pub fn COIIO_geterror(buf: *mut c_char, bufsize: c_int) -> c_int;
+    pub fn COIIO_geterror() -> *const c_char;
 
     // ImageOutput
     pub fn COIIO_ImageOutput_create(filename: *const c_char, plugin_searchpath: *const c_char) -> *mut ImageOutput;
@@ -75,6 +77,10 @@ extern {
     pub fn COIIO_ImageOutput_write_image(this_: *mut ImageOutput, format: *const TypeDesc, xstride: libc::ptrdiff_t, ystride: libc::ptrdiff_t, zstride: libc::ptrdiff_t) -> bool;
     pub fn COIIO_ImageOutput_close(this_: *mut ImageOutput) -> bool;
     pub fn COIIO_ImageOutput_destroy(imageout: *mut ImageOutput);
+    pub fn COIIO_ImageOutput_geterror(this_: *mut ImageOutput) -> *const c_char;
+
+    // String handling
+    pub fn COIIO_delete_cstring(ptr: *const c_char);
 }
 
 #[repr(C)]
@@ -134,6 +140,7 @@ pub struct TypeDesc {
     reserved: c_uchar,
     arraylen: c_int,
 }
+
 
 impl TypeDesc {
     pub fn from_basetype(basetype: Basetype, aggregate: AggregateKind, vecsemantics: VecSemantics) -> TypeDesc {

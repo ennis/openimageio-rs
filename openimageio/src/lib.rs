@@ -1,4 +1,5 @@
 extern crate openimageio_sys;
+extern crate libc;
 
 use std::ffi::{CStr,CString};
 use std::path::Path;
@@ -11,9 +12,11 @@ pub use openimageio_sys::{TypeDesc, AggregateKind, VecSemantics};
 use openimageio_sys::ImageOutput_OpenMode;
 pub type OpenMode = ImageOutput_OpenMode;
 
+
 #[derive(Clone,Debug)]
 pub enum Error {
     OpenError(String),
+    WriteError(String),
 }
 
 impl error::Error for Error
@@ -21,6 +24,7 @@ impl error::Error for Error
     fn description(&self) -> &str {
         match *self {
             Error::OpenError(_) => { "error opening image" },
+            Error::WriteError(_) => { "error writing image data" },
             _ => { "unknown error" },
         }
     }
@@ -30,18 +34,22 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(),fmt::Error> {
         match *self {
             Error::OpenError(ref msg) => { write!(f, "Error opening image: {}", msg) },
+            Error::WriteError(ref msg) => { write!(f, "Error writing image data: {}", msg) },
             _ => { write!(f, "Unknown error.") },
         }
     }
 }
 
+unsafe fn cstring_to_owned(cstr: *const c_char) -> String {
+    // assume utf8 input
+    let msg = CStr::from_ptr(cstr).to_str().unwrap().to_owned();
+    openimageio_sys::COIIO_delete_cstring(cstr);
+    msg
+}
+
 fn get_last_error() -> String {
-    const ERROR_BUFSIZE: usize = 1024;
-    let mut buf = [0 as u8; ERROR_BUFSIZE];
     unsafe {
-        openimageio_sys::COIIO_geterror(buf.as_mut_ptr() as *mut c_char, ERROR_BUFSIZE as c_int);
-        // assume utf8 input
-        String::from_utf8_lossy(&buf).into_owned()
+        cstring_to_owned(openimageio_sys::COIIO_geterror())
     }
 }
 
@@ -92,11 +100,17 @@ impl ImageInput {
             openimageio_sys::COIIO_ImageInput_open(path_cstr.as_ptr(), ptr::null())
         };
         if imginput.is_null() {
-            Err(Error::OpenError(get_last_error()))
+            Err(Error::OpenError( get_last_error()))
         } else {
             Ok(ImageInput {
                 ptr: imginput
             })
+        }
+    }
+
+    fn get_last_error(&self) -> String {
+        unsafe {
+            cstring_to_owned(openimageio_sys::COIIO_ImageInput_geterror(self.ptr))
         }
     }
 }
@@ -110,7 +124,8 @@ impl Drop for ImageInput {
 }
 
 pub struct ImageOutput {
-    ptr: *mut openimageio_sys::ImageOutput
+    ptr: *mut openimageio_sys::ImageOutput,
+    path: CString
 }
 
 pub struct SubimageOutput<'a> {
@@ -118,17 +133,44 @@ pub struct SubimageOutput<'a> {
 }
 
 impl ImageOutput {
+    fn get_last_error(&self) -> String {
+        unsafe {
+            cstring_to_owned(openimageio_sys::COIIO_ImageOutput_geterror(self.ptr))
+        }
+    }
 
     // Open or create an imageoutput
     pub fn open<P: AsRef<Path>>(path: P) -> Result<ImageOutput, Error> {
-       unimplemented!()
+        let path =  CString::new(path.as_ref().to_str().unwrap()).unwrap();
+        let plugin_search_path = CString::new("").unwrap();
+        let ptr = unsafe {
+            openimageio_sys::COIIO_ImageOutput_create(path.as_ptr(), plugin_search_path.as_ptr())
+        };
+        if ptr.is_null() {
+            Err(Error::OpenError(get_last_error()))
+        } else {
+            Ok(ImageOutput {
+                ptr,
+                path
+            })
+        }
     }
 
     // Open a subimage
     // May fail if spec is not supported
     // Mut-borrows the subimage so that you can't open more than one at a time
     pub fn open_subimage<'a>(&'a mut self, spec: &ImageSpec) -> Result<SubimageOutput<'a>,Error> {
-        unimplemented!()
+        let open_result = unsafe {
+            openimageio_sys::COIIO_ImageOutput_open(self.ptr, self.path.as_ptr(), spec.ptr, ImageOutput_OpenMode::AppendSubimage)
+        };
+
+        if !open_result {
+            Err(Error::OpenError(self.get_last_error()))
+        } else {
+            Ok(SubimageOutput {
+                parent: self
+            })
+        }
     }
 
     // Open subimages
@@ -137,18 +179,43 @@ impl ImageOutput {
     pub fn open_subimages<'a>(&'a mut self, specs: &[ImageSpec]) -> ! {
         unimplemented!()
     }
+
+    fn close_internal(&mut self) {
+        unsafe {
+            openimageio_sys::COIIO_ImageOutput_close(self.ptr);
+        }
+    }
+}
+
+impl Drop for ImageOutput {
+    fn drop(&mut self) {
+        self.close_internal();
+        unsafe {
+            openimageio_sys::COIIO_ImageOutput_destroy(self.ptr);
+        }
+    }
 }
 
 impl<'a> SubimageOutput<'a> {
-    pub fn write_image(&self) -> Result<(),Error> {
+    pub fn write_image(&mut self) -> Result<(),Error> {
         unimplemented!()
     }
 
-    // TODO write scanline
+    pub unsafe fn write_image_raw(&mut self, typedesc: &TypeDesc, pixels: &[u8]) -> Result<(),Error> {
+        let write_result =
+            openimageio_sys::COIIO_ImageOutput_write_image(self.parent.ptr, typedesc, -1 as libc::ptrdiff_t, -1 as libc::ptrdiff_t, -1 as libc::ptrdiff_t);
+        if !write_result {
+            Err(Error::WriteError(self.parent.get_last_error()))
+        }
+        else {
+            Ok(())
+        }
+    }
+
 
     // finish writing to this subimage (and release the borrow)
     pub fn close(self) {
-        unimplemented!()
+
     }
 }
 
