@@ -15,8 +15,8 @@ OIIO::ImageSpec *COIIO_ImageSpec_new(OIIO::TypeDesc format) {
 }
 
 OIIO::ImageSpec *COIIO_ImageSpec_new_2D(int xres, int yres, int nchans,
-                                        OIIO::TypeDesc fmt) {
-  return new OIIO::ImageSpec(xres, yres, nchans, fmt);
+                                        const OIIO::TypeDesc *fmt) {
+  return new OIIO::ImageSpec(xres, yres, nchans, *fmt);
 }
 
 void COIIO_ImageSpec_delete(OIIO::ImageSpec *ptr) { delete ptr; }
