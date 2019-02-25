@@ -1,5 +1,9 @@
-[workspace]
-members = [
-    "openimageio-sys",
-    "openimageio"
-]
+[package]
+name = "openimageio"
+version = "0.1.0"
+authors = ["Alexandre Bléron <alex.bleron@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+openimageio-sys = {path = "openimageio-sys"}
+libc = "*"

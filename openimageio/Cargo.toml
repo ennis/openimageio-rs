@@ -1,8 +1,0 @@
-[package]
-name = "openimageio"
-version = "0.1.0"
-authors = ["Alexandre Bléron <alex.bleron@gmail.com>"]
-
-[dependencies]
-openimageio-sys = {path = "../openimageio-sys"}
-libc = "*"

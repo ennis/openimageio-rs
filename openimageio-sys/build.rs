@@ -1,21 +1,18 @@
-extern crate vcpkg;
-extern crate pkg_config;
 extern crate bindgen;
-extern crate gcc;
+extern crate cc;
+extern crate pkg_config;
+extern crate vcpkg;
 
-use std::error::Error;
-use std::env;
-use std::path::PathBuf;
+use std::{env, error::Error, path::PathBuf};
 
-fn main()
-{
+fn main() {
     let mut found_oiio = false;
     let mut include_paths = Vec::new();
     env::set_var("VCPKGRS_DYNAMIC", "1");
     // try vcpkg on windows
     eprintln!("trying to detect/fetch OpenImageIO through vcpkg...");
 
-    let lib = vcpkg::Config::new().copy_dlls(true).probe("openimageio");
+    let lib = vcpkg::find_package("openimageio");
     match lib {
         Ok(lib) => {
             eprintln!("found OpenImageIO through vcpkg");
@@ -26,7 +23,7 @@ fn main()
             eprintln!("-> DLL paths: {:?}", lib.dll_paths);
             found_oiio = true;
             include_paths = lib.include_paths;
-        },
+        }
         Err(err) => {
             eprintln!("ERROR: {}", err.description());
         }
@@ -44,7 +41,7 @@ fn main()
                 eprintln!("-> include paths: {:?}", lib.include_paths);
                 found_oiio = true;
                 include_paths = lib.include_paths;
-            },
+            }
             Err(err) => {
                 eprintln!("ERROR: {}", err.description());
             }
@@ -56,52 +53,54 @@ fn main()
         panic!("Could not find OpenImageIO");
     }
 
-    // bindgen
-
-    /*let bindings= {
+    // bindgen our functions
+    let bindings = {
         let mut builder = bindgen::Builder::default();
         // The input header we would like to generate
-        // bindings for.
-        builder = builder.header("bindings/wrapper.hpp")
-            .clang_arg("-std=c++14")
+        builder = builder
+            .header("src/glue/oiio.h")
             .clang_arg("-v")
-            .disable_name_namespacing()
-            // don't include methods and functions: we replace them with a C API
-            .ignore_methods()
-            // Hide std (shouldn't appear anyway)
-            .hide_type("std::.*")
-            // whitelist all easily representable types
-            .whitelisted_type(".*TypeDesc")
-            // make all types containing std stuff opaque
-            .opaque_type("*.ImageSpec")
-            .opaque_type("*.ImageInput")
-            .opaque_type("*.ImageOutput")
-            // whitelist our C API
-            .whitelisted_function("COIIO_.*");
+            .derive_copy(true)
+            .with_codegen_config(
+                bindgen::CodegenConfig::TYPES
+                    | bindgen::CodegenConfig::FUNCTIONS
+                    | bindgen::CodegenConfig::VARS,
+            )
+            .prepend_enum_name(false);
 
         // add include paths
-        for p in include_paths {
+        for p in include_paths.iter() {
             builder = builder.clang_arg(format!("-I{}", p.to_str().unwrap()));
-            //println!("-I{}", p.to_str().unwrap());
+            println!("-I{}", p.to_str().unwrap());
         }
         // Finish the builder and generate the bindings.
         builder.generate()
     }
-        // Unwrap the Result and panic on failure.
+    // Unwrap the Result and panic on failure.
     .expect("Unable to generate bindings");
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
-        .write_to_file(out_path.join("oiio_bindings.rs"))
-        .expect("Couldn't write bindings!");*/
+        .write_to_file(out_path.join("bindings.rs"))
+        .expect("Couldn't write bindings!");
 
     // compile bindings
-    let mut build = gcc::Build::new();
-    build.file("wrapper/wrapper.cpp");
-    build.include("wrapper");
+    let mut build = cc::Build::new();
+    //build.file("src/glue/color.cpp");
+    //build.file("src/glue/imagebuf.cpp");
+    //build.file("src/glue/imagebufalgo.cpp");
+    //build.file("src/glue/imagecache.cpp");
+    build.file("src/glue/helpers.cpp");
+    build.file("src/glue/imageinput.cpp");
+    build.file("src/glue/imageoutput.cpp");
+    build.file("src/glue/imagespec.cpp");
+    build.file("src/glue/imagecache.cpp");
+    build.file("src/glue/oiio.cpp");
+    //build.file("src/glue/roi.cpp");
+    build.include("src/glue");
     for p in include_paths {
         build.include(p);
     }
-    build.compile("wrapper");
+    build.compile("glue");
 }
