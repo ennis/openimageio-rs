@@ -15,7 +15,7 @@ pub use error::Error;
 pub use input::ImageInput;
 pub use output::{ImageOutput, MultiImageOutput, SingleImageOutput};
 pub use spec::{Channel, ChannelDesc, ImageSpec, ImageSpecOwned};
-pub use typedesc::{Aggregate, BaseType, TypeDesc, VecSemantics};
+pub use typedesc::{Aggregate, BaseType, TypeDesc, VecSemantics, ImageData};
 
 pub use cache::ImageCache;
 
@@ -32,14 +32,14 @@ mod tests {
 
     #[test]
     fn open_image() {
-        let img = ImageInput::open("../test_images/tonberry.jpg");
+        let img = ImageInput::open("test_images/tonberry.jpg");
         assert!(img.is_ok());
     }
 
     /// test all API forms
     #[test]
     fn test_api() {
-        let mut img = ImageInput::open("../test_images/kazeharu.png").unwrap();
+        let mut img = ImageInput::open("test_images/kazeharu.png").unwrap();
 
         // members on imageinput
         img.spec();
@@ -123,7 +123,7 @@ mod tests {
 
     #[test]
     fn open_image_exr() {
-        let mut img = ImageInput::open("../test_images/output0013.exr").unwrap();
+        let mut img = ImageInput::open("test_images/output0013.exr").unwrap();
         for c in img.spec().channels() {
             println!("{:?}", c);
         }
@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn open_image_png() {
-        let mut img = ImageInput::open("../test_images/kazeharu.png").unwrap();
+        let mut img = ImageInput::open("test_images/kazeharu.png").unwrap();
         let size = (img.width(), img.height());
         let data = img.rgba_channels().unwrap().read::<f32>().unwrap();
         let spec = ImageSpecOwned::new_2d(TypeDesc::FLOAT, size.0, size.1, &["R", "G", "B", "A"]);
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn open_image_psd() {
-        let img = ImageInput::open("../test_images/cup.psd").unwrap();
+        let img = ImageInput::open("test_images/cup.psd").unwrap();
         for ch in img.spec().channels() {
             println!("channel {:?}", ch);
         }
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn open_image_tif() {
-        let img = ImageInput::open("../test_images/cup.tif").unwrap();
+        let img = ImageInput::open("test_images/cup.tif").unwrap();
         for ch in img.spec().channels() {
             println!("channel {:?}", ch);
         }
@@ -170,7 +170,7 @@ mod tests {
 
     #[test]
     fn open_nonexistent_image() {
-        let img = ImageInput::open("../test_images/nonexistent.png");
+        let img = ImageInput::open("test_images/nonexistent.png");
         if let Err(ref e) = img {
             println!("{}", e);
         }
@@ -181,12 +181,12 @@ mod tests {
     fn test_cache_api() {
         let cache = ImageCache::new();
 
-        cache.image("../test_images/cup.tif").unwrap();
-        cache.image("../test_images/cup.tif").unwrap();
-        cache.image("../test_images/cup.psd").unwrap();
-        cache.image("../test_images/output0013.exr").unwrap();
-        cache.image("../test_images/tonberry.jpg").unwrap();
-        let img = cache.image("../test_images/kazeharu.png").unwrap();
+        cache.image("test_images/cup.tif").unwrap();
+        cache.image("test_images/cup.tif").unwrap();
+        cache.image("test_images/cup.psd").unwrap();
+        cache.image("test_images/output0013.exr").unwrap();
+        cache.image("test_images/tonberry.jpg").unwrap();
+        let img = cache.image("test_images/kazeharu.png").unwrap();
 
         // members on CachedImage
         img.spec();
@@ -209,72 +209,72 @@ mod tests {
         sub.depth();
         sub.read::<f32>().unwrap(); // consumes
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage(0)
             .unwrap()
             .spec();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage(0)
             .unwrap()
             .width();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage(0)
             .unwrap()
             .height();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage(0)
             .unwrap()
             .depth();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage(0)
             .unwrap()
             .all_channels();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage(0)
             .unwrap()
             .channels(0..1)
             .unwrap();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage(0)
             .unwrap()
             .channels_by_name(&["R"])
             .unwrap();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage(0)
             .unwrap()
             .rgba_channels()
             .unwrap();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage(0)
             .unwrap()
             .alpha_channel()
             .unwrap();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage(0)
             .unwrap()
             .read::<f32>()
             .unwrap();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage(0)
             .unwrap()
@@ -290,72 +290,72 @@ mod tests {
         sub.depth();
         sub.read::<f32>().unwrap(); // consumes
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .spec();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .width();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .height();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .depth();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .all_channels();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .channels(0..1)
             .unwrap();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .channels_by_name(&["R"])
             .unwrap();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .rgba_channels()
             .unwrap();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .alpha_channel()
             .unwrap();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .read::<f32>()
             .unwrap();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
@@ -371,35 +371,35 @@ mod tests {
         chan.depth();
         chan.read::<f32>().unwrap(); // consumes.
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .all_channels()
             .spec();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .all_channels()
             .width();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .all_channels()
             .height();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
             .all_channels()
             .depth();
         cache
-            .image("../test_images/kazeharu.png")
+            .image("test_images/kazeharu.png")
             .unwrap()
             .subimage_mipmap(0, 0)
             .unwrap()
