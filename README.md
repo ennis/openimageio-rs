@@ -8,11 +8,14 @@ openimageio-rs does not currently attempt to compile the native C++ library from
 Instead, the native C++ library must already be installed on your system. 
 The build script will try to find it via `pkg-config` on 
 Linux, or `vcpkg-rs` on Windows. 
+Currently, only OpenImageIO **1.8** is supported.
 
 Use the following vcpkg command to install the native library on Windows:
 ```
 vcpkg install openimageio
 ```
+
+
 
 ### Usage
 
