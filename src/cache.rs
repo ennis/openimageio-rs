@@ -13,6 +13,10 @@ use std::{
     ptr,
 };
 
+/// A cache of image data that allows an application to read pixels from many image files
+/// while controlling the amount of used memory.
+///
+/// See the original documentation for more information.
 pub struct ImageCache(*mut sys::OIIO_ImageCache);
 
 impl ImageCache {
@@ -20,16 +24,21 @@ impl ImageCache {
         unsafe { cstring_to_owned(sys::OIIO_ImageCache_geterror(self.0)) }
     }
 
+    /// Creates a new image cache with the default parameters.
     pub fn new() -> ImageCache {
         let ptr = unsafe { sys::OIIO_ImageCache_create(false) };
         ImageCache(ptr)
     }
 
+    /// Creates a _shared_ image cache: this function returns an instance of `ImageCache` that
+    /// references a single image cache shared by the whole program.
     pub fn new_shared() -> ImageCache {
         let ptr = unsafe { sys::OIIO_ImageCache_create(true) };
         ImageCache(ptr)
     }
 
+    /// Invalidates the specified image in the cache, forcing its contents to be reloaded
+    /// on the next access.
     pub fn invalidate<P: AsRef<Path>>(&self, filename: P) {
         let filename_str = filename.as_ref().to_str().unwrap();
         unsafe {
@@ -37,6 +46,12 @@ impl ImageCache {
         }
     }
 
+    /// Gets the current value of an attribute of the ImageCache.
+    ///
+    /// Returns an error if the attribute is not of the expected type (`A`).
+    ///
+    /// The following attributes are recognized:
+    /// - TODO
     pub fn get_attribute<A: AttributeType>(&self, attr_name: &str) -> Result<A, Error> {
         unsafe {
             A::get(|ptr| {
@@ -55,6 +70,11 @@ impl ImageCache {
         }
     }
 
+    /// Sets the current value of an attribute of the ImageCache.
+    ///
+    /// Returns an error if the attribute is not of the expected type (`A`).
+    ///
+    /// See [get_attribute] for a list of recognized attribute names.
     pub fn set_attribute<A: AttributeType>(&self, attr_name: &str, attr: A) -> Result<(), Error> {
         unsafe {
             attr.set(|ptr| {
@@ -73,10 +93,12 @@ impl ImageCache {
         }
     }
 
+    /// Equivalent to `get_attribute("max_memory_MB")`.
     pub fn max_memory_mb(&self) -> f32 {
         self.get_attribute("max_memory_MB").unwrap()
     }
 
+    /// Equivalent to `set_attribute("max_memory_MB", megabytes)`
     pub fn set_max_memory_mb(&self, megabytes: f32) {
         self.set_attribute("max_memory_MB", megabytes).unwrap();
     }
@@ -144,6 +166,8 @@ impl ImageCache {
         Ok(img)
     }
 
+    /// Returns an `ImageSpec` describing the image specified by `handle`,
+    /// for the specified subimage index and mip level.
     pub fn get_image_spec(
         &self,
         handle: *mut sys::OIIO_ImageCache_ImageHandle,

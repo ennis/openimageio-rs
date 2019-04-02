@@ -40,12 +40,12 @@ impl ImageInput {
         }
     }
 
-    /// Selects a subimage
+    /// Selects a specific subimage and its first mip level for reading.
     pub fn subimage(&mut self, subimage: usize) -> Result<SubimageMipmapInput, Error> {
         self.subimage_mipmap(subimage, 0)
     }
 
-    /// Selects a subimage and mip level.
+    /// Selects a specific subimage and mip level for reading.
     pub fn subimage_mipmap(
         &mut self,
         subimage: usize,
@@ -122,7 +122,8 @@ impl ImageInput {
         }
     }
 
-    /// Selects channels.
+    /// Selects channels to read.
+    ///
     pub fn channels_by_name(
         &mut self,
         channel_names: &[&str],
@@ -169,6 +170,7 @@ impl ImageInput {
     }
 }
 
+/// A specific subimage and mip level of an ImageInput.
 pub struct SubimageMipmapInput<'a> {
     img: &'a mut ImageInput,
     spec: ImageSpecOwned,

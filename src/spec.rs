@@ -1,4 +1,4 @@
-//! ImageSpec
+//! Types describing the format and content of an image file.
 use crate::{Error, TypeDesc};
 use openimageio_sys as sys;
 use openimageio_sys::AsStringRef;
@@ -8,7 +8,7 @@ use std::{
     os::raw::c_int,
 };
 
-/// Describes a color channel of an image.
+/// Describes one color channel of an image.
 #[derive(Copy, Clone, Debug)]
 pub struct Channel<'a> {
     /// Format of the channel data.
@@ -18,6 +18,8 @@ pub struct Channel<'a> {
 }
 
 impl<'a> Channel<'a> {
+    /// Converts this object into a [ChannelDesc] which contains the same information
+    /// but does not borrow.
     pub fn to_channel_desc(&self) -> ChannelDesc {
         ChannelDesc {
             format: self.format,
@@ -55,10 +57,10 @@ impl ImageSpec {
     ///
     /// (OpenImageIO:) A depth greater than 1 indicates a 3D "volumetric" image.
     ///
-    /// (OpenImageIO:) `x,y,z` default to (0,0,0), but setting them differently may indicate
+    /// `x,y,z` default to (0,0,0), but setting them differently may indicate
     /// that this image is offset from the usual origin.
     ///
-    /// (OpenImageIO:) Pixel data are defined over pixel coordinates \[x ... x+width-1\] horizontally,
+    /// Pixel data are defined over pixel coordinates \[x ... x+width-1\] horizontally,
     /// \[y ... y+height-1\] vertically, and \[z ... z+depth-1\] in depth.
     pub fn data_window(&self) -> Window {
         Window {
@@ -204,6 +206,8 @@ impl ImageSpec {
     }
 
     /// Returns the description of the channel at index `index`.
+    ///
+    /// Returns [Error::InvalidChannelIndex] if no such channel exists.
     pub fn channel_by_index(&self, index: usize) -> Result<Channel, Error> {
         let nch = self.num_channels();
         if index >= nch {
@@ -226,6 +230,7 @@ impl ImageSpec {
         })
     }
 
+    /// Returns the index and description of the channel identified by `name`, if it exists.
     pub fn channel_by_name(&self, name: &str) -> Result<(usize, Channel), Error> {
         self.channels()
             .enumerate()
@@ -233,6 +238,10 @@ impl ImageSpec {
             .ok_or(Error::ChannelNotFound)
     }
 
+    /// Returns the range of channel indices corresponding to the range bounds given in `index_range`.
+    ///
+    /// Returns [Error::InvalidParameter] if the end of the range is before the start, or if one
+    /// bound exceeds the number of channels.
     pub fn channel_range(
         &self,
         index_range: impl RangeBounds<usize>,
@@ -262,6 +271,11 @@ impl ImageSpec {
         Ok(start..end)
     }
 
+    /// Returns the range of channels corresponding to the given channel names.
+    ///
+    /// The specified channels must exist, must be in the same order as specified,
+    /// and must be contiguous.
+    /// Otherwise, an error is returned.
     pub fn channels_by_name(&self, channel_names: &[&str]) -> Result<Range<usize>, Error> {
         if channel_names.is_empty() {
             return Err(Error::InvalidParameter);
@@ -294,6 +308,7 @@ impl ImageSpec {
         0..self.num_channels()
     }
 
+    /// Returns the range of channel indices corresponding to the RGB channels (in this order).
     pub fn rgb_channels(&self) -> Result<Range<usize>, Error> {
         let nch = self.num_channels();
         if nch < 3 {
@@ -302,10 +317,12 @@ impl ImageSpec {
         Ok(0..3)
     }
 
+    /// Returns the range of channel indices corresponding to the RGBA channels (in this order).
     pub fn rgba_channels(&self) -> Result<Range<usize>, Error> {
         self.channels_by_name(&["R", "G", "B", "A"])
     }
 
+    /// Returns the index of the alpha channel (the channel named "A").
     pub fn alpha_channel(&self) -> Result<usize, Error> {
         Ok(self.channels_by_name(&["A"])?.start)
     }
@@ -318,6 +335,14 @@ impl ImageSpec {
             .filter(move |(_, ch)| re.is_match(ch.name))
     }*/
 
+    /// Calculates coordinate ranges from the specified bounds.
+    ///
+    /// Example:
+    /// ```rust
+    /// // with width,height,depth = 1024
+    /// assert_eq!(spec.calculate_bounds(..,..,..) == (0..1024,0..1024,0..1024));
+    /// assert_eq!(spec.calculate_bounds(512..,512..,..) == (512..1024,512..1024,512..1024));
+    /// ```
     pub fn calculate_bounds(
         &self,
         xs: impl RangeBounds<i32>,
@@ -362,30 +387,6 @@ impl ImageSpec {
 
         (xstart..xend, ystart..yend, zstart..zend)
     }
-
-    /*
-    pub fn channel_ranges_by_name(&self, channel_names: &[&str]) -> Result<ChannelRanges, Error> {
-        let mut indices = Vec::new();
-        for name in channel_names.iter() {
-            let (index, _) = self.channel_by_name(name)?;
-            indices.push(index);
-        }
-        Ok(coalesce_channels(indices.into_iter()))
-    }
-
-    pub fn channel_ranges_by_index(&self, channels: &[usize]) -> Result<ChannelRanges, Error> {
-        for &ch in channels {
-            self.channel_by_index(ch)?;
-        }
-        Ok(coalesce_channels(channels.iter().cloned()))
-    }
-
-    pub fn all_channels_as_ranges(&self) -> ChannelRanges {
-        ChannelRanges {
-            count: self.num_channels(),
-            ranges: vec![0..self.num_channels()],
-        }
-    }*/
 }
 
 /// Version of [ImageSpec] that owns its data.
@@ -428,34 +429,6 @@ impl ImageSpecOwned {
 
         ImageSpecOwned(ptr)
     }
-
-    /*pub fn new_2d_0(xres: u32, yres: u32, channel_formats: ChannelFormats, channel_names: &[&str]) -> ImageSpecOwned {
-        let channel_names = channel_names.iter().map(|s| s.as_stringref()).collect::<Vec<_>>();
-
-        let (sepchannels, formatptr) = match channel_formats {
-            ChannelFormats::Single(ref typedesc) => {
-                (false, typedesc)
-            }
-            ChannelFormats::PerChannel(typedescs) => {
-                (true, typedescs)
-            }
-        };
-
-        let ptr = unsafe {
-            sys::OIIO_ImageSpec_new_2d(
-                xres as c_int,
-                yres as c_int,
-                channel_names.len() as c_int,
-                sepchannels,
-                formatptr,
-                channel_names.as_ptr()
-            )
-        };
-
-        ImageSpecOwned(ptr)
-    }*/
-
-    //pub fn new()
 }
 
 impl Drop for ImageSpecOwned {
@@ -474,46 +447,3 @@ impl Deref for ImageSpecOwned {
     }
 }
 
-/*
-pub(crate) fn channel_descs_from_index_ranges(
-    spec: &ImageSpec,
-    ranges: &[Range<usize>],
-) -> Vec<ChannelDesc> {
-    let mut channel_descs = Vec::new();
-    for r in ranges.iter() {
-        for ich in r.clone() {
-            channel_descs.push(spec.channel_by_index(ich).unwrap().to_channel_desc());
-        }
-    }
-    channel_descs
-}*/
-
-/*
-/// Helper function to turn a sequence of channel indices into contiguous ranges of indices.
-///
-/// This is done to optimize the number of reads necessary to load a set of channels in memory.
-pub(crate) fn coalesce_channels(channels: impl Iterator<Item = usize>) -> ChannelRanges {
-    let mut count = 0;
-    // optimize this
-    let ranges: Vec<_> = channels
-        .map(|i| {
-            count += 1;
-            i..i + 1
-        })
-        .coalesce(|a, b| {
-            if a.end == b.start {
-                Ok(a.start..b.end)
-            } else {
-                Err((a, b))
-            }
-        })
-        .collect();
-    ChannelRanges { count, ranges }
-}
-
-pub struct ChannelRanges {
-    pub count: usize,
-    pub ranges: Vec<Range<usize>>,
-}
-
-*/
