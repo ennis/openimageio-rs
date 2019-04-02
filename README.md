@@ -4,11 +4,14 @@
 
 ### Prerequisites
 
+**Note:** Unfortunately, these bindings are currently unusable on Linux since OpenImageIO does not yet support pkg-config. 
+
 openimageio-rs does not currently attempt to compile the native C++ library from scratch. 
 Instead, the native C++ library must already be installed on your system. 
 The build script will try to find it via `pkg-config` on 
-Linux, or `vcpkg-rs` on Windows. 
+Linux, or `vcpkg` on Windows. 
 Currently, only OpenImageIO **1.8** is supported.
+
 
 Use the following vcpkg command to install the native library on Windows:
 ```
