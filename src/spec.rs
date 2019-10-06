@@ -327,21 +327,13 @@ impl ImageSpec {
         Ok(self.channels_by_name(&["A"])?.start)
     }
 
-   /* /// Finds every channel whose name match the specified regular expression.
-    pub fn find_channels<'a>(&'a self, re: &str) -> impl Iterator<Item = (usize, Channel)> + 'a {
-        let re = regex::Regex::new(re).expect("invalid regular expression");
-        self.channels()
-            .enumerate()
-            .filter(move |(_, ch)| re.is_match(ch.name))
-    }*/
-
     /// Calculates coordinate ranges from the specified bounds.
     ///
     /// Example:
     /// ```rust
     /// // with width,height,depth = 1024
-    /// assert_eq!(spec.calculate_bounds(..,..,..) == (0..1024,0..1024,0..1024));
-    /// assert_eq!(spec.calculate_bounds(512..,512..,..) == (512..1024,512..1024,512..1024));
+    /// assert_eq!(spec.calculate_bounds(..,..,..), (0..1024,0..1024,0..1024));
+    /// assert_eq!(spec.calculate_bounds(512..,512..,..), (512..1024,512..1024,512..1024));
     /// ```
     pub fn calculate_bounds(
         &self,

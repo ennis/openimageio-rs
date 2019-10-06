@@ -636,10 +636,3 @@ impl<'a> CachedSubimageMipmapChannels<'a> {
         }
     }*/
 }
-
-/*
-pub struct ImageHandle<'a> {
-    cache: &'a ImageCache,
-    handle: *mut sys::OIIO_ImageCache_ImageHandle,
-}
-*/

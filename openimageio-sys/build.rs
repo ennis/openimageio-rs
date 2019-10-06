@@ -25,7 +25,7 @@ fn main() {
             include_paths = lib.include_paths;
         }
         Err(err) => {
-            eprintln!("ERROR: {}", err.description());
+            eprintln!("ERROR: {}", err);
         }
     }
 
@@ -43,7 +43,7 @@ fn main() {
                 include_paths = lib.include_paths;
             }
             Err(err) => {
-                eprintln!("ERROR: {}", err.description());
+                eprintln!("ERROR: {}", err);
             }
         }
     }

@@ -18,7 +18,7 @@ impl ImageOutput {
         unsafe { cstring_to_owned(sys::OIIO_ImageOutput_geterror(self.ptr)) }
     }
 
-    // Creates an imageoutput
+    /// Creates an imageoutput
     pub fn create<P: AsRef<Path>>(path: P) -> Result<ImageOutput, Error> {
         let path = path.as_ref().to_str().unwrap();
         let plugin_search_path = "";
