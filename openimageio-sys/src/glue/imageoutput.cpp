@@ -32,6 +32,10 @@ bool OIIO_ImageOutput_write_image(OIIO_ImageOutput *out,
                                                     zstride);
 }
 
+bool OIIO_ImageOutput_write_scanline(OIIO_ImageOutput *out, int y, int z, OIIO_TypeDesc format, const void *data, stride_t xstride) {
+    return OIIO_CAST(ImageOutput, out)->write_scanline(y, z, unwrapTypeDesc(format), data, xstride);
+}
+
 bool
 OIIO_ImageOutput_open2(OIIO_ImageOutput *out, OIIO_StringRef name, int subimages, const OIIO_ImageSpec *const *specs) {
     std::string s_filename{name.ptr, name.len};

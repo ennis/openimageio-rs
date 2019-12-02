@@ -150,6 +150,8 @@ bool OIIO_ImageOutput_write_image(OIIO_ImageOutput *out,
                                   ptrdiff_t xstride,
                                   ptrdiff_t ystride,
                                   ptrdiff_t zstride);
+bool OIIO_ImageOutput_write_scanline(OIIO_ImageOutput *out, int y, int z, OIIO_TypeDesc format, const void *data, stride_t xstride);
+
 
 //---------------------------------------------------------------------
 // OIIO_ImageSpec
