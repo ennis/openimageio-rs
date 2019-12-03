@@ -122,6 +122,26 @@ mod tests {
     }
 
     #[test]
+    fn read_image_scanline() {
+        // scanline based png
+        let mut img = ImageInput::open("test_images/kazeharu.png").unwrap();
+        assert!(img.spec().tile_width() == 0);
+
+        let mut img_data: Vec<u8> = Vec::new();
+        img_data.resize(img.spec().width() as usize * img.spec().num_channels(), 0);
+
+        // reading all scanlines should be the same as reading the whole image
+        let mut all_scanlines: Vec<u8> = Vec::new();
+        for y in 0..img.spec().height() {
+            img.read_scanline(y as i32, 0, &mut img_data).unwrap();
+            all_scanlines.extend(img_data.clone().iter());
+        }
+
+        let whole_img: ImageBuffer<u8> = img.read().unwrap();
+        assert_eq!(all_scanlines, whole_img.data);
+    }
+
+    #[test]
     fn open_image_exr() {
         let mut img = ImageInput::open("test_images/output0013.exr").unwrap();
         for c in img.spec().channels() {

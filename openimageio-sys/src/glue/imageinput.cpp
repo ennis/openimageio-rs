@@ -119,12 +119,13 @@ bool OIIO_ImageInput_read_image_format2(
             cbk_data);
 }
 
-bool OIIO_ImageInput_read_scanline_floats(OIIO_ImageInput *in, int y, int z, float *data) {
-    return OIIO_CAST(ImageInput ,in)->read_scanline(y, z, data);
+bool OIIO_ImageInput_read_scanline_format(OIIO_ImageInput *in, int y, int z, OIIO_TypeDesc format, void* data, stride_t xstride) {
+    return OIIO_CAST(ImageInput ,in)->read_scanline(y, z, unwrapTypeDesc(format), data, xstride);
 }
 
-bool OIIO_ImageInput_read_tile_floats(OIIO_ImageInput *in, int x, int y, int z, float *data) {
-    return OIIO_CAST(ImageInput ,in)->read_tile(x, y, z, data);
+bool OIIO_ImageInput_read_tile_format(OIIO_ImageInput *in, int x, int y, int z, OIIO_TypeDesc format, void* data,
+ 									stride_t xstride, stride_t ystride, stride_t zstride) {
+    return OIIO_CAST(ImageInput ,in)->read_tile(x, y, z, unwrapTypeDesc(format), data, xstride, ystride, zstride);
 }
 
 

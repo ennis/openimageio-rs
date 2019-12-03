@@ -118,6 +118,28 @@ impl<'a> SingleImageOutput<'a> {
         }
     }
 
+    pub fn write_scanline<T: ImageData>(&mut self, y: i32, z: i32, pixels: &[T]) -> Result<(), Error> {
+        let spec = self.spec();
+        let nch = spec.num_channels();
+        let _n = (spec.width() * spec.height() * spec.depth()) as usize * nch;
+
+        let write_result = unsafe {
+            sys::OIIO_ImageOutput_write_scanline(
+                self.0.ptr,
+                y,
+                z,
+                T::DESC.0,
+                pixels.as_ptr() as *const c_void,
+                sys::OIIO_AutoStride,
+            )
+        };
+        if !write_result {
+            Err(Error::WriteError(self.0.get_last_error()))
+        } else {
+            Ok(())
+        }
+    }
+
     // finish writing to this subimage (and release the borrow)
     pub fn close(self) {}
 }

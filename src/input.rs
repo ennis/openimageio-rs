@@ -165,6 +165,51 @@ impl ImageInput {
         self.all_channels().read_into(out)
     }
 
+    pub fn read_tile<T: ImageData>(&mut self, x: i32, y: i32, z: i32, out: &mut [T]) -> Result<(), Error> {
+        let tile_size = {
+            let spec = self.spec();
+            spec.tile_width() * spec.tile_height() * spec.num_channels()
+        };
+        if tile_size == 0 {
+            // scanline image
+            return Err(Error::InvalidForImageType);
+        }
+        if tile_size > out.len() {
+            return Err(Error::BufferTooSmall);
+        }
+
+        let mut success = true;
+        success &= unsafe { openimageio_sys::OIIO_ImageInput_read_tile_format(
+            self.ptr,
+            x, y, z,
+            T::DESC.0, out.as_mut_ptr() as *mut c_void,
+            sys::OIIO_AutoStride, sys::OIIO_AutoStride, sys::OIIO_AutoStride,
+        ) };
+        if success {
+            Ok(())
+        } else {
+            Err(Error::ReadError(self.get_last_error()))
+        }
+    }
+
+    pub fn read_scanline<T: ImageData>(&mut self, y: i32, z: i32, out: &mut [T]) -> Result<(), Error> {
+        if self.spec().tile_width() != 0 {
+            // tile image
+            return Err(Error::InvalidForImageType);
+        }
+        let scanline_size = self.spec().width() * self.spec().num_channels() as u32;
+        if scanline_size > out.len() as u32 {
+            return Err(Error::BufferTooSmall);
+        }
+        let mut success = true;
+        success &= unsafe { openimageio_sys::OIIO_ImageInput_read_scanline_format(self.ptr, y, z, T::DESC.0, out.as_mut_ptr() as *mut c_void, sys::OIIO_AutoStride) };
+        if success {
+            Ok(())
+        } else {
+            Err(Error::ReadError(self.get_last_error()))
+        }
+    }
+
     fn get_last_error(&self) -> String {
         unsafe { cstring_to_owned(sys::OIIO_ImageInput_geterror(self.ptr)) }
     }

@@ -192,6 +192,18 @@ impl ImageSpec {
         )
     }
 
+    pub fn tile_width(&self) -> usize {
+        unsafe { sys::OIIO_ImageSpec_tile_width(&self.0) as usize }
+    }
+
+    pub fn tile_height(&self) -> usize {
+        unsafe { sys::OIIO_ImageSpec_tile_height(&self.0) as usize }
+    }
+
+    pub fn tile_depth(&self) -> usize {
+        unsafe { sys::OIIO_ImageSpec_tile_depth(&self.0) as usize }
+    }
+
     /// (OpenImageIO:) The number of channels (color values) present in each pixel of the image.
     ///
     /// For example, an RGB image has 3 channels.
@@ -438,4 +450,3 @@ impl Deref for ImageSpecOwned {
         unsafe { &*(self.0 as *const ImageSpec) }
     }
 }
-
