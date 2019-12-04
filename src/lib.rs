@@ -122,6 +122,82 @@ mod tests {
     }
 
     #[test]
+    fn read_image_scanline() {
+        // scanline based png
+        let mut img = ImageInput::open("test_images/kazeharu.png").unwrap();
+        assert!(img.spec().tile_width() == 0);
+
+        let mut img_data: Vec<u8> = Vec::new();
+        img_data.resize(img.spec().width() as usize * img.spec().num_channels(), 0);
+
+        // reading all scanlines should be the same as reading the whole image
+        let mut all_scanlines: Vec<u8> = Vec::new();
+        for y in 0..img.spec().height() {
+            img.read_scanline(y as i32, 0, &mut img_data).unwrap();
+            all_scanlines.extend(img_data.clone().iter());
+        }
+
+        let whole_img: ImageBuffer<u8> = img.read().unwrap();
+        assert_eq!(all_scanlines, whole_img.data);
+    }
+
+    #[test]
+    fn write_image_scanline() {
+        // scanline based png
+        let mut img = ImageInput::open("test_images/kazeharu.png").unwrap();
+        let data: ImageBuffer<u8> = img.read().unwrap();
+
+        let mut out = ImageOutput::create("kazeharu.png").unwrap();
+        let mut out = out.open(&img.spec()).unwrap();
+        out.write_image(data.data()).unwrap();
+
+        let mut out2 = ImageOutput::create("kazeharu_scanline.png").unwrap();
+        let mut out2 = out2.open(&img.spec()).unwrap();
+        let row_width: usize = data.width * data.num_channels;
+        for y in 0..data.height() as usize {
+            out2.write_scanline(y as i32, 0, &data.data[(y * row_width)..((y + 1) * row_width)]).unwrap();
+        }
+
+        // Written image should be identical
+        fn file_contents(f: &str) -> Vec<u8> {
+            use std::io::Read;
+            use std::fs::File;
+            let mut file = File::open(f).unwrap();
+            let mut res = Vec::new();
+            file.read_to_end(&mut res).unwrap();
+            res
+        }
+
+        assert_eq!(file_contents("kazeharu.png"), file_contents("kazeharu_scanline.png"));
+    }
+
+    #[test]
+    fn read_tiled() {
+        let mut img = ImageInput::open("test_images/tiled.tif").unwrap();
+        assert!(img.spec().tile_width() > 0);
+        // read first tile, verify it matches the same data of the whole image read with 'read()'
+        let mut tiled_data: Vec<u8> = Vec::new();
+        tiled_data.resize(img.spec().tile_width() * img.spec().tile_height() * img.spec().num_channels(), 0);
+        img.read_tile(0, 0, 0, &mut tiled_data).unwrap();
+
+        let mut whole_img: ImageBuffer<u8> = img.read().unwrap();
+
+        assert!(whole_img.data().len() > tiled_data.len());
+        // Manually split out the specific tile we read from the whole image 
+        let tile_from_whole_img: Vec<u8> = 
+            whole_img.data
+            .chunks_mut(img.spec().width() as usize * img.spec().num_channels()) // image rows
+            .map(|chunk| {
+                chunk[0..(img.spec().tile_width() * img.spec().num_channels())].to_vec() // chop down to tile width
+            })
+            .take(img.spec().tile_height()) // chop down to tile height
+            .flatten() // re-merge chunks
+            .collect();
+
+        assert_eq!(tile_from_whole_img, tiled_data);
+    }
+
+    #[test]
     fn open_image_exr() {
         let mut img = ImageInput::open("test_images/output0013.exr").unwrap();
         for c in img.spec().channels() {
