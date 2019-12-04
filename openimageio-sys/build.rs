@@ -102,5 +102,7 @@ fn main() {
     for p in include_paths {
         build.include(p);
     }
+    build.cpp(true);
+    build.flag("-std=c++11");
     build.compile("glue");
 }

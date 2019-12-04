@@ -1,0 +1,29 @@
+language: rust
+rust:
+  - stable
+  - beta
+
+addons:
+  apt:
+    packages:
+    - ffmpeg
+    - libtiff-dev
+    - libboost-all-dev
+    - libavcodec-dev
+    - cmake
+    - clang
+
+cache: 
+  cargo: true
+  directories:
+  - /home/travis/openimageio
+
+before_script:
+- mkdir -p /home/travis/openimageio
+- cd /home/travis/openimageio && $TRAVIS_BUILD_DIR/ci/install_oiio.sh
+- cd $TRAVIS_BUILD_DIR
+
+
+script:
+  - cargo build --verbose --all
+  - cargo test --lib --verbose # don't run all tests because one of the examples is broken
