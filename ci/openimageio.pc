@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=/usr
+includedir=${prefix}/include
+
+Name: OpenImageIO
+Description: OpenImageIO is a library for reading and writing images.
+Version: 1.8.17
+Libs: -L/lib64 -L${libdir} -lOpenImageIO -lstdc++
+Cflags: -I${includedir}/OpenImageIO -std=c++14
