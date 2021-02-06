@@ -11,4 +11,4 @@ file(GLOB SOURCE_FILES
         openimageio-sys/src/glue/imagecache.cpp)
 
 add_executable(openimageio_rs ${SOURCE_FILES})
-target_include_directories(openimageio_rs PRIVATE "C:\\Users\\Alexandre\\Developpement\\vcpkg\\installed\\x64-windows\\include\\")
+target_include_directories(openimageio_rs PRIVATE "C:\\vcpkg\\installed\\x64-windows\\include\\")

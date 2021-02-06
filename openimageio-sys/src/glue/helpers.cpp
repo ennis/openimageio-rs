@@ -3,29 +3,24 @@
 //
 #include "helpers.hpp"
 
-char* makeCString(const std::string& str)
-{
-    auto n = str.size();
-    char* ptr = new char[n+1];
-    strncpy(ptr, str.c_str(), n+1);
-    return ptr;
+namespace helpers {
+char *makeCString(const std::string &str) {
+  auto n = str.size();
+  char *ptr = new char[n + 1];
+  strncpy(ptr, str.c_str(), n + 1);
+  return ptr;
 }
 
-void freeCString(const char *ptr) {
-    delete[] ptr;
-}
+void freeCString(const char *ptr) { delete[] ptr; }
 
-char** makeCharArray(int size) {
-    return (char**)calloc(sizeof(char*), size);
-}
+char **makeCharArray(int size) { return (char **)calloc(sizeof(char *), size); }
 
-void setArrayString(char **a, char *s, int n) {
-    a[n] = s;
-}
+void setArrayString(char **a, char *s, int n) { a[n] = s; }
 
 void freeCharArray(char **a, int size) {
-    int i;
-    for (i = 0; i < size; i++)
-        free(a[i]);
-    free(a);
+  int i;
+  for (i = 0; i < size; i++)
+    free(a[i]);
+  free(a);
 }
+} // namespace oiio_util

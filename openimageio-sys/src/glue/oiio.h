@@ -10,50 +10,50 @@ extern "C" {
 #endif
 
 typedef struct {
-    unsigned char basetype;     ///< C data type at the heart of our type
-    unsigned char aggregate;    ///< What kind of AGGREGATE is it?
-    unsigned char vecsemantics; ///< What does the vec represent?
-    unsigned char reserved;     ///< Reserved for future expansion
-    int arraylen;               ///< Array length, 0 = not array, -1 = unsized
+  unsigned char basetype;     ///< C data type at the heart of our type
+  unsigned char aggregate;    ///< What kind of AGGREGATE is it?
+  unsigned char vecsemantics; ///< What does the vec represent?
+  unsigned char reserved;     ///< Reserved for future expansion
+  int arraylen;               ///< Array length, 0 = not array, -1 = unsized
 } OIIO_TypeDesc;
 
 typedef enum {
-    OIIO_TypeDesc_BaseType_Unknown,
-    OIIO_TypeDesc_BaseType_None,
-    OIIO_TypeDesc_BaseType_UInt8,
-    OIIO_TypeDesc_BaseType_Int8,
-    OIIO_TypeDesc_BaseType_UInt16,
-    OIIO_TypeDesc_BaseType_Int16,
-    OIIO_TypeDesc_BaseType_UInt32,
-    OIIO_TypeDesc_BaseType_Int32,
-    OIIO_TypeDesc_BaseType_UInt64,
-    OIIO_TypeDesc_BaseType_Int64,
-    OIIO_TypeDesc_BaseType_Half,
-    OIIO_TypeDesc_BaseType_Float,
-    OIIO_TypeDesc_BaseType_Double,
-    OIIO_TypeDesc_BaseType_String,
-    OIIO_TypeDesc_BaseType_Ptr,
-    OIIO_TypeDesc_BaseType_Lastbase
+  OIIO_TypeDesc_BaseType_Unknown,
+  OIIO_TypeDesc_BaseType_None,
+  OIIO_TypeDesc_BaseType_UInt8,
+  OIIO_TypeDesc_BaseType_Int8,
+  OIIO_TypeDesc_BaseType_UInt16,
+  OIIO_TypeDesc_BaseType_Int16,
+  OIIO_TypeDesc_BaseType_UInt32,
+  OIIO_TypeDesc_BaseType_Int32,
+  OIIO_TypeDesc_BaseType_UInt64,
+  OIIO_TypeDesc_BaseType_Int64,
+  OIIO_TypeDesc_BaseType_Half,
+  OIIO_TypeDesc_BaseType_Float,
+  OIIO_TypeDesc_BaseType_Double,
+  OIIO_TypeDesc_BaseType_String,
+  OIIO_TypeDesc_BaseType_Ptr,
+  OIIO_TypeDesc_BaseType_Lastbase
 } OIIO_TypeDesc_BaseType;
 
 typedef enum {
-    OIIO_TypeDesc_Aggregate_Scalar = 1,
-    OIIO_TypeDesc_Aggregate_Vec2 = 2,
-    OIIO_TypeDesc_Aggregate_Vec3 = 3,
-    OIIO_TypeDesc_Aggregate_Vec4 = 4,
-    OIIO_TypeDesc_Aggregate_Matrix33 = 9,
-    OIIO_TypeDesc_Aggregate_Matrix44 = 16
+  OIIO_TypeDesc_Aggregate_Scalar = 1,
+  OIIO_TypeDesc_Aggregate_Vec2 = 2,
+  OIIO_TypeDesc_Aggregate_Vec3 = 3,
+  OIIO_TypeDesc_Aggregate_Vec4 = 4,
+  OIIO_TypeDesc_Aggregate_Matrix33 = 9,
+  OIIO_TypeDesc_Aggregate_Matrix44 = 16
 } OIIO_TypeDesc_Aggregate;
 
 typedef enum {
-    OIIO_TypeDesc_VecSemantics_NoSemantics,  // no semantic hints
-    OIIO_TypeDesc_VecSemantics_Color,    // color
-    OIIO_TypeDesc_VecSemantics_Point,    // spatial location
-    OIIO_TypeDesc_VecSemantics_Vector,   // spatial direction
-    OIIO_TypeDesc_VecSemantics_Normal,   // surface normal
-    OIIO_TypeDesc_VecSemantics_Timecode, // SMPTE timecode (should be int[2])
-    OIIO_TypeDesc_VecSemantics_Keycode,  // SMPTE keycode (should be int[7])
-    OIIO_TypeDesc_VecSemantics_Rational  // paired numerator and denominator
+  OIIO_TypeDesc_VecSemantics_NoSemantics, // no semantic hints
+  OIIO_TypeDesc_VecSemantics_Color,       // color
+  OIIO_TypeDesc_VecSemantics_Point,       // spatial location
+  OIIO_TypeDesc_VecSemantics_Vector,      // spatial direction
+  OIIO_TypeDesc_VecSemantics_Normal,      // surface normal
+  OIIO_TypeDesc_VecSemantics_Timecode,    // SMPTE timecode (should be int[2])
+  OIIO_TypeDesc_VecSemantics_Keycode,     // SMPTE keycode (should be int[7])
+  OIIO_TypeDesc_VecSemantics_Rational     // paired numerator and denominator
 } OIIO_TypeDesc_VecSemantics;
 
 typedef ptrdiff_t stride_t;
@@ -67,18 +67,17 @@ typedef struct OIIO_ImageCache OIIO_ImageCache;
 typedef struct OIIO_ImageCache_ImageHandle OIIO_ImageCache_ImageHandle;
 typedef struct OIIO_ImageCache_Perthread OIIO_ImageCache_Perthread;
 
-
 typedef enum {
-    OIIO_ImageOutput_OpenMode_Create,
-    OIIO_ImageOutput_OpenMode_AppendSubimage,
-    OIIO_ImageOutput_OpenMode_AppendMIPLevel,
+  OIIO_ImageOutput_OpenMode_Create,
+  OIIO_ImageOutput_OpenMode_AppendSubimage,
+  OIIO_ImageOutput_OpenMode_AppendMIPLevel,
 } OIIO_ImageOutput_OpenMode;
 
-typedef bool(*ProgressCallback)(void *opaque_data, float portion_done);
+typedef bool (*ProgressCallback)(void *opaque_data, float portion_done);
 
 typedef struct {
-    const char *ptr;
-    size_t len;
+  const char *ptr;
+  size_t len;
 } OIIO_StringRef;
 
 void OIIO_freeString(const char *ptr);
@@ -100,58 +99,54 @@ bool OIIO_ImageInput_close(OIIO_ImageInput *in);
 int OIIO_ImageInput_current_subimage(const OIIO_ImageInput *in);
 int OIIO_ImageInput_current_miplevel(const OIIO_ImageInput *in);
 bool OIIO_ImageInput_seek_subimage(OIIO_ImageInput *in, int subimage, OIIO_ImageSpec *newspec);
-bool OIIO_ImageInput_seek_subimage_miplevel(OIIO_ImageInput *in, int subimage, int miplevel, OIIO_ImageSpec *newspec);
+bool OIIO_ImageInput_seek_subimage_miplevel(OIIO_ImageInput *in, int subimage, int miplevel,
+                                            OIIO_ImageSpec *newspec);
 // bool OIIO_ImageInput_read_scanline_floats(OIIO_ImageInput *in, int y, int z, float *data);
-bool OIIO_ImageInput_read_scanline_format(OIIO_ImageInput *in, int y, int z, OIIO_TypeDesc format, void* data, stride_t xstride);
+bool OIIO_ImageInput_read_scanline_format(OIIO_ImageInput *in, int y, int z, OIIO_TypeDesc format,
+                                          void *data, stride_t xstride);
 // bool OIIO_ImageInput_read_tile_floats(OIIO_ImageInput *in, int x, int y, int z, float *data);
-bool OIIO_ImageInput_read_tile_format(OIIO_ImageInput *in, int x, int y, int z, OIIO_TypeDesc format, void* data,
- 									stride_t xstride, stride_t ystride, stride_t zstride);
+bool OIIO_ImageInput_read_tile_format(OIIO_ImageInput *in, int x, int y, int z,
+                                      OIIO_TypeDesc format, void *data, stride_t xstride,
+                                      stride_t ystride, stride_t zstride);
 bool OIIO_ImageInput_read_image_floats(OIIO_ImageInput *in, float *data);
-bool OIIO_ImageInput_read_image_format(OIIO_ImageInput *in, OIIO_TypeDesc format, void *data, void *cbk_data);
-bool OIIO_ImageInput_read_image_format2(OIIO_ImageInput *in,
-                                        int chbegin,
-                                        int chend,
-                                        OIIO_TypeDesc format,
-                                        void *data,
-                                        stride_t xstride,
-                                        stride_t ystride,
-                                        stride_t zstride,
-                                        void *cbk_data);
+bool OIIO_ImageInput_read_image_format(OIIO_ImageInput *in, OIIO_TypeDesc format, void *data,
+                                       void *cbk_data);
+bool OIIO_ImageInput_read_image_format2(OIIO_ImageInput *in, int chbegin, int chend,
+                                        OIIO_TypeDesc format, void *data, stride_t xstride,
+                                        stride_t ystride, stride_t zstride, void *cbk_data);
 const char *OIIO_ImageInput_geterror(const OIIO_ImageInput *in);
 
 // bool ImageInput_read_native_scanline(OIIO_ImageInput *in, int y, int z, void *data);
 // bool ImageInput_read_native_tile(OIIO_ImageInput *in, int x, int y, int z, void *data);
-// bool ImageInput_read_native_tiles(OIIO_ImageInput *in, int xbegin, int xend, int ybegin, int yend, int zbegin, int zend, void *data);
-// bool ImageInput_read_native_deep_scanlines(OIIO_ImageInput *in, int ybegin, int yend, int z, int chbegin, int chend, DeepData* deepdata);
-// bool ImageInput_read_native_deep_tiles(OIIO_ImageInput *in, int xbegin, int xend, int ybegin, int yend, int zbegin, int zend,
-// 											int chbegin, int chend, DeepData &deepdata);
-// bool ImageInput_read_native_deep_image(OIIO_ImageInput *in, DeepData* deepdata);
-// int ImageInput_send_to_input(OIIO_ImageInput *in, const char *format,...);
-// int ImageInput_send_to_client(OIIO_ImageInput *in, const char *format,...);
+// bool ImageInput_read_native_tiles(OIIO_ImageInput *in, int xbegin, int xend, int ybegin, int
+// yend, int zbegin, int zend, void *data); bool
+// ImageInput_read_native_deep_scanlines(OIIO_ImageInput *in, int ybegin, int yend, int z, int
+// chbegin, int chend, DeepData* deepdata); bool ImageInput_read_native_deep_tiles(OIIO_ImageInput
+// *in, int xbegin, int xend, int ybegin, int yend, int zbegin, int zend, int chbegin, int chend,
+// DeepData &deepdata); bool ImageInput_read_native_deep_image(OIIO_ImageInput *in, DeepData*
+// deepdata); int ImageInput_send_to_input(OIIO_ImageInput *in, const char *format,...); int
+// ImageInput_send_to_client(OIIO_ImageInput *in, const char *format,...);
 
 //---------------------------------------------------------------------
 // OIIO_ImageOutput
 //
 
 void OIIO_ImageOutput_delete(OIIO_ImageOutput *out);
-OIIO_ImageOutput *OIIO_ImageOutput_create(OIIO_StringRef filename, OIIO_StringRef plugin_searchpath);
+OIIO_ImageOutput *OIIO_ImageOutput_create(OIIO_StringRef filename,
+                                          OIIO_StringRef plugin_searchpath);
 const char *OIIO_ImageOutput_format_name(const OIIO_ImageOutput *out);
 const OIIO_ImageSpec *OIIO_ImageOutput_spec(const OIIO_ImageOutput *out);
 bool OIIO_ImageOutput_supports(const OIIO_ImageOutput *out, OIIO_StringRef feature);
 const char *OIIO_ImageOutput_geterror(const OIIO_ImageOutput *out);
-bool OIIO_ImageOutput_open(OIIO_ImageOutput *out, OIIO_StringRef name, const OIIO_ImageSpec *newspec,
-                           OIIO_ImageOutput_OpenMode openmode);
-bool
-OIIO_ImageOutput_open2(OIIO_ImageOutput *out, OIIO_StringRef name, int subimages, const OIIO_ImageSpec *const *specs);
+bool OIIO_ImageOutput_open(OIIO_ImageOutput *out, OIIO_StringRef name,
+                           const OIIO_ImageSpec *newspec, OIIO_ImageOutput_OpenMode openmode);
+bool OIIO_ImageOutput_open2(OIIO_ImageOutput *out, OIIO_StringRef name, int subimages,
+                            const OIIO_ImageSpec *const *specs);
 bool OIIO_ImageOutput_close(OIIO_ImageOutput *out);
-bool OIIO_ImageOutput_write_image(OIIO_ImageOutput *out,
-                                  OIIO_TypeDesc format,
-                                  const void *data,
-                                  ptrdiff_t xstride,
-                                  ptrdiff_t ystride,
-                                  ptrdiff_t zstride);
-bool OIIO_ImageOutput_write_scanline(OIIO_ImageOutput *out, int y, int z, OIIO_TypeDesc format, const void *data, stride_t xstride);
-
+bool OIIO_ImageOutput_write_image(OIIO_ImageOutput *out, OIIO_TypeDesc format, const void *data,
+                                  ptrdiff_t xstride, ptrdiff_t ystride, ptrdiff_t zstride);
+bool OIIO_ImageOutput_write_scanline(OIIO_ImageOutput *out, int y, int z, OIIO_TypeDesc format,
+                                     const void *data, stride_t xstride);
 
 //---------------------------------------------------------------------
 // OIIO_ImageSpec
@@ -161,15 +156,16 @@ void OIIO_ImageSpec_delete(OIIO_ImageSpec *spec);
 
 OIIO_ImageSpec *OIIO_ImageSpec_new(OIIO_TypeDesc fmt);
 OIIO_ImageSpec *OIIO_ImageSpec_clone(OIIO_ImageSpec *from);
-OIIO_ImageSpec *
-OIIO_ImageSpec_new_2d(int xres, int yres, int nchans, bool separateformats, const OIIO_TypeDesc *channelformats,
-                      const OIIO_StringRef *channelnames);
+OIIO_ImageSpec *OIIO_ImageSpec_new_2d(int xres, int yres, int nchans, bool separateformats,
+                                      const OIIO_TypeDesc *channelformats,
+                                      const OIIO_StringRef *channelnames);
 
 void OIIO_ImageSpec_default_channel_names(OIIO_ImageSpec *spec);
 size_t OIIO_ImageSpec_channel_bytes(const OIIO_ImageSpec *spec);
 size_t OIIO_ImageSpec_channel_bytes_chan(const OIIO_ImageSpec *spec, int chan, bool native);
 size_t OIIO_ImageSpec_pixel_bytes(const OIIO_ImageSpec *spec, bool native);
-size_t OIIO_ImageSpec_pixel_bytes_chans(const OIIO_ImageSpec *spec, int chbegin, int chend, bool native);
+size_t OIIO_ImageSpec_pixel_bytes_chans(const OIIO_ImageSpec *spec, int chbegin, int chend,
+                                        bool native);
 imagesize_t OIIO_ImageSpec_scanline_bytes(const OIIO_ImageSpec *spec, bool native);
 imagesize_t OIIO_ImageSpec_tile_pixels(const OIIO_ImageSpec *spec);
 imagesize_t OIIO_ImageSpec_tile_bytes(const OIIO_ImageSpec *spec, bool native);
@@ -181,7 +177,8 @@ char *OIIO_ImageSpec_to_xml(OIIO_ImageSpec *spec);
 // void from_xml(const char *xml)
 // bool valid_tile_range(int xbegin, int xend, int ybegin, int yend, int zbegin, int zend)
 
-// void OIIO_ImageSpec_get_channelformats(OIIO_ImageSpec *spec, std::vector< OIIO_TypeDesc > &formats);
+// void OIIO_ImageSpec_get_channelformats(OIIO_ImageSpec *spec, std::vector< OIIO_TypeDesc >
+// &formats);
 
 // Properties
 int OIIO_ImageSpec_x(const OIIO_ImageSpec *spec);
@@ -218,12 +215,12 @@ int OIIO_ImageSpec_nchannels(const OIIO_ImageSpec *spec);
 void OIIO_ImageSpec_set_nchannels(OIIO_ImageSpec *spec, int val);
 OIIO_TypeDesc OIIO_ImageSpec_format(const OIIO_ImageSpec *spec);
 void OIIO_ImageSpec_set_format(OIIO_ImageSpec *spec, OIIO_TypeDesc format);
-//int OIIO_ImageSpec_nchannelformats(const OIIO_ImageSpec *spec);
-//const OIIO_TypeDesc* OIIO_ImageSpec_channelformats(const OIIO_ImageSpec *spec);
-//void OIIO_ImageSpec_set_channelformats(OIIO_ImageSpec *spec, OIIO_TypeDesc *formats);
+// int OIIO_ImageSpec_nchannelformats(const OIIO_ImageSpec *spec);
+// const OIIO_TypeDesc* OIIO_ImageSpec_channelformats(const OIIO_ImageSpec *spec);
+// void OIIO_ImageSpec_set_channelformats(OIIO_ImageSpec *spec, OIIO_TypeDesc *formats);
 const char *OIIO_ImageSpec_channelname(const OIIO_ImageSpec *spec, int index);
 OIIO_TypeDesc OIIO_ImageSpec_channelformat(const OIIO_ImageSpec *spec, int chan);
-//void OIIO_ImageSpec_channelnames(const OIIO_ImageSpec *spec, char **out);
+// void OIIO_ImageSpec_channelnames(const OIIO_ImageSpec *spec, char **out);
 void OIIO_ImageSpec_set_channelnames(OIIO_ImageSpec *spec, char **names);
 int OIIO_ImageSpec_alpha_channel(const OIIO_ImageSpec *spec);
 void OIIO_ImageSpec_set_alpha_channel(OIIO_ImageSpec *spec, int val);
@@ -232,21 +229,24 @@ void OIIO_ImageSpec_set_z_channel(OIIO_ImageSpec *spec, int val);
 bool OIIO_ImageSpec_deep(const OIIO_ImageSpec *spec);
 void OIIO_ImageSpec_set_deep(OIIO_ImageSpec *spec, bool val);
 
-void OIIO_ImageSpec_attribute_type_data(OIIO_ImageSpec *spec, const char *name, OIIO_TypeDesc type, const void *value);
-void OIIO_ImageSpec_attribute_type_char(OIIO_ImageSpec *spec, const char *name, OIIO_TypeDesc type, const char *value);
+void OIIO_ImageSpec_attribute_type_data(OIIO_ImageSpec *spec, const char *name, OIIO_TypeDesc type,
+                                        const void *value);
+void OIIO_ImageSpec_attribute_type_char(OIIO_ImageSpec *spec, const char *name, OIIO_TypeDesc type,
+                                        const char *value);
 void OIIO_ImageSpec_attribute_uint(OIIO_ImageSpec *spec, const char *name, unsigned int value);
 void OIIO_ImageSpec_attribute_int(OIIO_ImageSpec *spec, const char *name, int value);
 void OIIO_ImageSpec_attribute_float(OIIO_ImageSpec *spec, const char *name, float value);
 void OIIO_ImageSpec_attribute_char(OIIO_ImageSpec *spec, const char *name, const char *value);
 int OIIO_ImageSpec_get_int_attribute(OIIO_ImageSpec *spec, const char *name, int defaultval);
 float OIIO_ImageSpec_get_float_attribute(OIIO_ImageSpec *spec, const char *name, float defaultval);
-const char *OIIO_ImageSpec_get_string_attribute(OIIO_ImageSpec *spec, const char *name, const char *defaultval);
-void
-OIIO_ImageSpec_erase_attribute(OIIO_ImageSpec *spec, const char *name, OIIO_TypeDesc searchtype, bool caseSensitive);
-// ImageIOParameter * find_attribute(const char* name, OIIO_TypeDesc searchtype=OIIO_TypeDesc::UNKNOWN, bool casesensitive=false)
-// const ImageIOParameter * find_attribute(const char* name, OIIO_TypeDesc searchtype=OIIO_TypeDesc::UNKNOWN, bool casesensitive=false);
-
-
+const char *OIIO_ImageSpec_get_string_attribute(OIIO_ImageSpec *spec, const char *name,
+                                                const char *defaultval);
+void OIIO_ImageSpec_erase_attribute(OIIO_ImageSpec *spec, const char *name,
+                                    OIIO_TypeDesc searchtype, bool caseSensitive);
+// ImageIOParameter * find_attribute(const char* name, OIIO_TypeDesc
+// searchtype=OIIO_TypeDesc::UNKNOWN, bool casesensitive=false) const ImageIOParameter *
+// find_attribute(const char* name, OIIO_TypeDesc searchtype=OIIO_TypeDesc::UNKNOWN, bool
+// casesensitive=false);
 
 // ImageBuf
 //
@@ -254,23 +254,23 @@ OIIO_ImageSpec_erase_attribute(OIIO_ImageSpec *spec, const char *name, OIIO_Type
 ImageBuf* ImageBuf_New();
 ImageBuf* ImageBuf_New_WithCache(const char* name, ImageCache *imagecache);
 ImageBuf* ImageBuf_New_WithBuffer(const char* name, const OIIO_ImageSpec* spec, void *buffer);
-ImageBuf* ImageBuf_New_SubImage(const char* name, int subimage, int miplevel, ImageCache* imagecache);
-ImageBuf* ImageBuf_New_Spec(const OIIO_ImageSpec* spec);
+ImageBuf* ImageBuf_New_SubImage(const char* name, int subimage, int miplevel, ImageCache*
+imagecache); ImageBuf* ImageBuf_New_Spec(const OIIO_ImageSpec* spec);
 
 void ImageBuf_delete(ImageBuf* buf);
 
 void ImageBuf_clear(ImageBuf* buf);
-void ImageBuf_reset_subimage(ImageBuf* buf, const char* name, int subimage, int miplevel, ImageCache *imagecache);
-void ImageBuf_reset_name_cache(ImageBuf* buf, const char* name, ImageCache *imagecache);
-void ImageBuf_reset_spec(ImageBuf* buf, OIIO_ImageSpec* spec);
-void ImageBuf_reset_name_spec(ImageBuf* buf, const char* name, const OIIO_ImageSpec* spec);
+void ImageBuf_reset_subimage(ImageBuf* buf, const char* name, int subimage, int miplevel, ImageCache
+*imagecache); void ImageBuf_reset_name_cache(ImageBuf* buf, const char* name, ImageCache
+*imagecache); void ImageBuf_reset_spec(ImageBuf* buf, OIIO_ImageSpec* spec); void
+ImageBuf_reset_name_spec(ImageBuf* buf, const char* name, const OIIO_ImageSpec* spec);
 
 IBStorage ImageBuf_storage(ImageBuf* buf);
 bool ImageBuf_initialized(ImageBuf* buf);
-bool ImageBuf_read(ImageBuf* buf, int subimage, int miplevel, bool force, OIIO_TypeDesc convert, void *cbk_data);
-bool ImageBuf_init_spec(ImageBuf* buf, const char* filename, int subimage, int miplevel);
-bool ImageBuf_write_file(ImageBuf* buf, const char* filename, const char* fileformat, void *cbk_data);
-bool ImageBuf_write_output(ImageBuf* buf, OIIO_ImageOutput *out, void *cbk_data);
+bool ImageBuf_read(ImageBuf* buf, int subimage, int miplevel, bool force, OIIO_TypeDesc convert,
+void *cbk_data); bool ImageBuf_init_spec(ImageBuf* buf, const char* filename, int subimage, int
+miplevel); bool ImageBuf_write_file(ImageBuf* buf, const char* filename, const char* fileformat,
+void *cbk_data); bool ImageBuf_write_output(ImageBuf* buf, OIIO_ImageOutput *out, void *cbk_data);
 void ImageBuf_set_write_format(ImageBuf* buf, OIIO_TypeDesc format);
 void ImageBuf_set_write_tiles(ImageBuf* buf, int width, int height, int depth);
 void ImageBuf_copy_metadata(ImageBuf* dst, const ImageBuf* src);
@@ -290,15 +290,19 @@ int ImageBuf_nmiplevels(ImageBuf* buf);
 int ImageBuf_nchannels(ImageBuf* buf);
 // float ImageBuf_getchannel(ImageBuf* buf, int x, int y, int z, int c, WrapMode wrap);
 // void ImageBuf_getpixel(ImageBuf* buf, int x, int y, float *pixel, int maxchannels);
-// void ImageBuf_getpixel_xyz(ImageBuf* buf, int x, int y, int z, float *pixel, int maxchannels, WrapMode wrap);
+// void ImageBuf_getpixel_xyz(ImageBuf* buf, int x, int y, int z, float *pixel, int maxchannels,
+WrapMode wrap);
 // void ImageBuf_interppixel(ImageBuf* buf, float x, float y, float *pixel, WrapMode wrap);
 // void ImageBuf_interppixel_NDC(ImageBuf* buf, float s, float t, float *pixel, WrapMode wrap);
 // void ImageBuf_interppixel_NDC_full(ImageBuf* buf, float s, float t, float *pixel, WrapMode wrap);
 // void ImageBuf_setpixel(ImageBuf* buf, int x, int y, const float *pixel, int maxchannels);
-// void ImageBuf_setpixel_xyz(ImageBuf* buf, int x, int y, int z, const float *pixel, int maxchannels);
+// void ImageBuf_setpixel_xyz(ImageBuf* buf, int x, int y, int z, const float *pixel, int
+maxchannels);
 // void ImageBuf_setpixel_index(ImageBuf* buf, int i, const float *pixel, int maxchannels);
-bool ImageBuf_get_pixel_channels(ImageBuf* buf, int xbegin, int xend, int ybegin, int yend, int zbegin, int zend, int chbegin, int chend, OIIO_TypeDesc format, void *result);
-// bool ImageBuf_get_pixels(ImageBuf* buf, int xbegin, int xend, int ybegin, int yend, int zbegin, int zend, OIIO_TypeDesc format, void *result);
+bool ImageBuf_get_pixel_channels(ImageBuf* buf, int xbegin, int xend, int ybegin, int yend, int
+zbegin, int zend, int chbegin, int chend, OIIO_TypeDesc format, void *result);
+// bool ImageBuf_get_pixels(ImageBuf* buf, int xbegin, int xend, int ybegin, int yend, int zbegin,
+int zend, OIIO_TypeDesc format, void *result);
 
 int ImageBuf_orientation(ImageBuf* buf);
 int ImageBuf_oriented_width(ImageBuf* buf);
@@ -323,8 +327,10 @@ int ImageBuf_ymax(ImageBuf* buf);
 int ImageBuf_zmin(ImageBuf* buf);
 int ImageBuf_zmax(ImageBuf* buf);
 
-void ImageBuf_set_full(ImageBuf* buf, int xbegin, int xend, int ybegin, int yend, int zbegin, int zend);
-// void ImageBuf_set_full_border(ImageBuf* buf, int xbegin, int xend, int ybegin, int yend, int zbegin, int zend, const float *bordercolor);
+void ImageBuf_set_full(ImageBuf* buf, int xbegin, int xend, int ybegin, int yend, int zbegin, int
+zend);
+// void ImageBuf_set_full_border(ImageBuf* buf, int xbegin, int xend, int ybegin, int yend, int
+zbegin, int zend, const float *bordercolor);
 
 ROI* ImageBuf_roi(ImageBuf* buf);
 ROI* ImageBuf_roi_full(ImageBuf* buf);
@@ -349,8 +355,8 @@ bool ImageBuf_deep(ImageBuf* buf);
 void ROI_delete(ROI* roi);
 
 ROI* ROI_New();
-ROI* ROI_NewOptions(int xbeing, int xend, int ybegin, int yend, int zbegin, int zend, int chbegin, int chend);
-ROI* ROI_Copy(const ROI *roi);
+ROI* ROI_NewOptions(int xbeing, int xend, int ybegin, int yend, int zbegin, int zend, int chbegin,
+int chend); ROI* ROI_Copy(const ROI *roi);
 
 bool ROI_defined(ROI* roi);
 int ROI_width(ROI* roi);
@@ -381,64 +387,57 @@ void ROI_set_chend(ROI* roi, int val);
 // ImageCache
 //
 
-
 OIIO_ImageCache *OIIO_ImageCache_create(bool shared);
 void OIIO_ImageCache_destroy(OIIO_ImageCache *x, bool teardown);
-void OIIO_ImageCache_clear(OIIO_ImageCache *x);
 const char *OIIO_ImageCache_geterror(const OIIO_ImageCache *x);
 const char *OIIO_ImageCache_getstats(const OIIO_ImageCache *x, int level);
 void OIIO_ImageCache_reset_stats(OIIO_ImageCache *x);
 void OIIO_ImageCache_invalidate(OIIO_ImageCache *x, OIIO_StringRef filename);
 void OIIO_ImageCache_invalidate_all(OIIO_ImageCache *x, bool force);
-bool OIIO_ImageCache_attribute(OIIO_ImageCache *x, OIIO_StringRef name, OIIO_TypeDesc type, const void *val);
-bool OIIO_ImageCache_getattribute(OIIO_ImageCache *x, OIIO_StringRef name, OIIO_TypeDesc type, void *val);
+bool OIIO_ImageCache_attribute(OIIO_ImageCache *x, OIIO_StringRef name, OIIO_TypeDesc type,
+                               const void *val);
+bool OIIO_ImageCache_getattribute(OIIO_ImageCache *x, OIIO_StringRef name, OIIO_TypeDesc type,
+                                  void *val);
 OIIO_ImageCache_Perthread *
 OIIO_ImageCache_get_perthread_info(OIIO_ImageCache *x, OIIO_ImageCache_Perthread *thread_info);
 OIIO_ImageCache_Perthread *OIIO_ImageCache_create_perthread_info(OIIO_ImageCache *x);
-void OIIO_ImageCache_destroy_perthread_info(OIIO_ImageCache *x, OIIO_ImageCache_Perthread *thread_info);
-OIIO_ImageCache_ImageHandle *OIIO_ImageCache_get_image_handle(OIIO_ImageCache *x, OIIO_StringRef name);
+void OIIO_ImageCache_destroy_perthread_info(OIIO_ImageCache *x,
+                                            OIIO_ImageCache_Perthread *thread_info);
+OIIO_ImageCache_ImageHandle *OIIO_ImageCache_get_image_handle(OIIO_ImageCache *x,
+                                                              OIIO_StringRef name);
 bool OIIO_ImageCache_good(OIIO_ImageCache *x, OIIO_ImageCache_ImageHandle *file);
-bool OIIO_ImageCache_get_image_info(OIIO_ImageCache *x, OIIO_StringRef filename, int subimage, int miplevel,
-                                    OIIO_StringRef dataname, OIIO_TypeDesc datatype, void *data);
+bool OIIO_ImageCache_get_image_info(OIIO_ImageCache *x, OIIO_StringRef filename, int subimage,
+                                    int miplevel, OIIO_StringRef dataname, OIIO_TypeDesc datatype,
+                                    void *data);
 bool OIIO_ImageCache_get_image_info_by_handle(OIIO_ImageCache *x, OIIO_ImageCache_ImageHandle *file,
-                                              OIIO_ImageCache_Perthread *thread_info, int subimage, int miplevel,
-                                              OIIO_StringRef dataname, OIIO_TypeDesc datatype, void *data);
-bool OIIO_ImageCache_get_imagespec(OIIO_ImageCache *x, OIIO_StringRef filename, OIIO_ImageSpec *spec,
-                                   int subimage, int miplevel, bool native);
+                                              OIIO_ImageCache_Perthread *thread_info, int subimage,
+                                              int miplevel, OIIO_StringRef dataname,
+                                              OIIO_TypeDesc datatype, void *data);
+bool OIIO_ImageCache_get_imagespec(OIIO_ImageCache *x, OIIO_StringRef filename,
+                                   OIIO_ImageSpec *spec, int subimage, int miplevel, bool native);
 bool OIIO_ImageCache_get_imagespec_by_handle(OIIO_ImageCache *x, OIIO_ImageCache_ImageHandle *file,
                                              OIIO_ImageCache_Perthread *thread_info,
-                                             OIIO_ImageSpec *spec, int subimage, int miplevel, bool native);
+                                             OIIO_ImageSpec *spec, int subimage, int miplevel,
+                                             bool native);
 const char *OIIO_ImageCache_resolve_filename(OIIO_ImageCache *x, OIIO_StringRef filename);
-bool OIIO_ImageCache_get_pixels(OIIO_ImageCache *x,
-                                OIIO_StringRef filename,
-                                int subimage, int miplevel,
-                                int xbegin, int xend,
-                                int ybegin, int yend,
-                                int zbegin, int zend,
-                                OIIO_TypeDesc format, void *result);
-bool OIIO_ImageCache_get_pixels_by_handle(OIIO_ImageCache *x,
-                                 OIIO_ImageCache_ImageHandle *file,
-                                 OIIO_ImageCache_Perthread *thread_info,
-                                 int subimage, int miplevel,
-                                 int xbegin, int xend,
-                                 int ybegin, int yend,
-                                 int zbegin, int zend,
-                                 OIIO_TypeDesc format, void *result);
-bool OIIO_ImageCache_get_pixels_stride(OIIO_ImageCache *x,
-                                 OIIO_StringRef filename, int subimage, int miplevel,
-                                 int xbegin, int xend, int ybegin, int yend,
-                                 int zbegin, int zend, int chbegin, int chend,
-                                 OIIO_TypeDesc format, void *result,
-                                 stride_t xstride, stride_t ystride, stride_t zstride,
-                                 int cache_chbegin, int cache_chend);
-bool OIIO_ImageCache_get_pixels_stride_by_handle(OIIO_ImageCache *x, OIIO_ImageCache_ImageHandle *file,
-                                 OIIO_ImageCache_Perthread *thread_info,
-                                 int subimage, int miplevel,
-                                 int xbegin, int xend, int ybegin, int yend,
-                                 int zbegin, int zend, int chbegin, int chend,
-                                 OIIO_TypeDesc format, void *result,
-                                 stride_t xstride, stride_t ystride, stride_t zstride,
-                                 int cache_chbegin, int cache_chend);
+bool OIIO_ImageCache_get_pixels(OIIO_ImageCache *x, OIIO_StringRef filename, int subimage,
+                                int miplevel, int xbegin, int xend, int ybegin, int yend,
+                                int zbegin, int zend, OIIO_TypeDesc format, void *result);
+bool OIIO_ImageCache_get_pixels_by_handle(OIIO_ImageCache *x, OIIO_ImageCache_ImageHandle *file,
+                                          OIIO_ImageCache_Perthread *thread_info, int subimage,
+                                          int miplevel, int xbegin, int xend, int ybegin, int yend,
+                                          int zbegin, int zend, OIIO_TypeDesc format, void *result);
+bool OIIO_ImageCache_get_pixels_stride(OIIO_ImageCache *x, OIIO_StringRef filename, int subimage,
+                                       int miplevel, int xbegin, int xend, int ybegin, int yend,
+                                       int zbegin, int zend, int chbegin, int chend,
+                                       OIIO_TypeDesc format, void *result, stride_t xstride,
+                                       stride_t ystride, stride_t zstride, int cache_chbegin,
+                                       int cache_chend);
+bool OIIO_ImageCache_get_pixels_stride_by_handle(
+    OIIO_ImageCache *x, OIIO_ImageCache_ImageHandle *file, OIIO_ImageCache_Perthread *thread_info,
+    int subimage, int miplevel, int xbegin, int xend, int ybegin, int yend, int zbegin, int zend,
+    int chbegin, int chend, OIIO_TypeDesc format, void *result, stride_t xstride, stride_t ystride,
+    stride_t zstride, int cache_chbegin, int cache_chend);
 
 // bool ImageCache_attribute(ImageCache *x, const char *name, OIIO_TypeDesc type, const void *val);
 
@@ -462,7 +461,8 @@ bool OIIO_ImageCache_get_pixels_stride_by_handle(OIIO_ImageCache *x, OIIO_ImageC
 //                             int subimage=0, int miplevel=0,
 //                             bool native=false);
 
-// const OIIO_ImageSpec* ImageCache_imagespec(ImageCache *x, char *filename, int subimage, int miplevel, bool native);
+// const OIIO_ImageSpec* ImageCache_imagespec(ImageCache *x, char *filename, int subimage, int
+// miplevel, bool native);
 
 // bool get_pixels(ImageCache *x, char *filename, int subimage, int miplevel,
 //                          int xbegin, int xend, int ybegin, int yend,
@@ -486,8 +486,6 @@ bool OIIO_ImageCache_get_pixels_stride_by_handle(OIIO_ImageCache *x, OIIO_ImageC
 // 		                 int x, int y, int z, OIIO_TypeDesc format, const void *buffer,
 // 		                 stride_t xstride=AutoStride, stride_t ystride=AutoStride,
 // 		                 stride_t zstride=AutoStride);
-
-
 
 #ifdef __cplusplus
 }
