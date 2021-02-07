@@ -9,7 +9,7 @@ edition = "2018"
 libc = "*"
 
 [build-dependencies]
-vcpkg = "0.2.7"
+vcpkg = "0.2.11"
 pkg-config = "0.3.16"
-bindgen = "0.51.1"
-cc = "1.0.45"
+bindgen = "0.57.0"
+cc = "1.0.66"

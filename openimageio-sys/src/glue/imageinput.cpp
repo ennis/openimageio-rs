@@ -11,7 +11,8 @@ void OIIO_ImageInput_delete(OIIO_ImageInput *in) { delete OIIO_RS_CAST(ImageInpu
 
 OIIO_ImageInput *OIIO_ImageInput_open(OIIO_StringRef filename, const OIIO_ImageSpec *config) {
   std::string s_filename{filename.ptr, filename.len};
-  return (OIIO_ImageInput *)OIIO::ImageInput::open(s_filename, OIIO_RS_CAST_CONST(ImageSpec, config))
+  return (OIIO_ImageInput *)OIIO::ImageInput::open(s_filename,
+                                                   OIIO_RS_CAST_CONST(ImageSpec, config))
       .release();
 }
 
@@ -75,12 +76,37 @@ bool OIIO_ImageInput_read_image_floats(OIIO_ImageInput *in, float *data) {
   return OIIO_RS_CAST(ImageInput, in)->read_image(data);
 }
 
-bool OIIO_ImageInput_read_image_format(OIIO_ImageInput *in, OIIO_TypeDesc format, void *data,
+bool OIIO_ImageInput_read_scanlines(OIIO_ImageInput *in, int subimage, int miplevel, int ybegin,
+                                    int yend, int z, int chbegin, int chend, OIIO_TypeDesc format,
+                                    void *data, stride_t xstride, stride_t ystride) {
+  return OIIO_RS_CAST(ImageInput, in)
+      ->read_scanlines(subimage, miplevel, ybegin, yend, z, chbegin, chend,
+                       helpers::unwrapTypeDesc(format), data, xstride, ystride);
+}
+
+bool OIIO_ImageInput_read_image(OIIO_ImageInput *in, int subimage, int miplevel, int chbegin,
+                                int chend, OIIO_TypeDesc format, void *data, stride_t xstride,
+                                stride_t ystride, stride_t zstride) {
+  return OIIO_RS_CAST(ImageInput, in)
+      ->read_image(subimage, miplevel, chbegin, chend, helpers::unwrapTypeDesc(format), data,
+                   xstride, ystride, zstride, nullptr, nullptr);
+}
+
+bool OIIO_ImageInput_read_tiles(OIIO_ImageInput *in, int subimage, int miplevel, int xbegin,
+                                int xend, int ybegin, int yend, int zbegin, int zend, int chbegin,
+                                int chend, OIIO_TypeDesc format, void *data, stride_t xstride,
+                                stride_t ystride, stride_t zstride) {
+  return OIIO_RS_CAST(ImageInput, in)
+      ->read_tiles(subimage, miplevel, xbegin, xend, ybegin, yend, zbegin, zend, chbegin, chend,
+                   helpers::unwrapTypeDesc(format), data, xstride, ystride, zstride);
+}
+
+/*bool OIIO_ImageInput_read_image_format(OIIO_ImageInput *in, OIIO_TypeDesc format, void *data,
                                        void *cbk_data) {
   ProgressCallback cbk = nullptr;
-  /*if (cbk_data != nullptr) {
+  if (cbk_data != nullptr) {
       cbk = &image_progress_callback;
-  }*/
+  }
 
   return OIIO_RS_CAST(ImageInput, in)
       ->read_image(helpers::unwrapTypeDesc(format), data, OIIO::AutoStride, OIIO::AutoStride,
@@ -108,6 +134,6 @@ bool OIIO_ImageInput_read_tile_format(OIIO_ImageInput *in, int x, int y, int z,
                                       stride_t ystride, stride_t zstride) {
   return OIIO_RS_CAST(ImageInput, in)
       ->read_tile(x, y, z, helpers::unwrapTypeDesc(format), data, xstride, ystride, zstride);
-}
+}*/
 
 } // extern "C"

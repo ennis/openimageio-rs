@@ -205,6 +205,7 @@ impl Drop for ImageCache {
 /// Handle to a cached image.
 ///
 /// It's safe to clone since the image cache is thread safe.
+// TODO remove the `CachedSubimageMipmap` and `CachedSubimageMipmapChannels`
 #[derive(Clone)]
 pub struct CachedImage<'a> {
     cache: &'a ImageCache,

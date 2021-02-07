@@ -1,9 +1,10 @@
 use crate::{
     cstring_to_owned, error::get_last_error, typedesc::ImageData, Error, ImageBuffer, ImageSpec,
-    ImageSpecOwned,
+    ImageSpecOwned, TypeDesc,
 };
 use openimageio_sys as sys;
 use openimageio_sys::AsStringRef;
+use std::convert::TryInto;
 use std::{
     ffi::c_void,
     mem,
@@ -40,49 +41,6 @@ impl ImageInput {
         }
     }
 
-    /// Selects a specific subimage and its first mip level for reading.
-    pub fn subimage(&mut self, subimage: usize) -> Result<SubimageMipmapInput, Error> {
-        self.subimage_mipmap(subimage, 0)
-    }
-
-    /// Selects a specific subimage and mip level for reading.
-    pub fn subimage_mipmap(
-        &mut self,
-        subimage: usize,
-        miplevel: usize,
-    ) -> Result<SubimageMipmapInput, Error> {
-        let spec = self.seek_subimage_mipmap(subimage, miplevel)?;
-        Ok(SubimageMipmapInput {
-            img: self,
-            spec,
-            miplevel,
-            subimage,
-        })
-    }
-
-    fn seek_subimage_mipmap(
-        &mut self,
-        subimage: usize,
-        miplevel: usize,
-    ) -> Result<ImageSpecOwned, Error> {
-        let spec = ImageSpecOwned::new();
-
-        let exists = unsafe {
-            sys::OIIO_ImageInput_seek_subimage_miplevel(
-                self.ptr,
-                subimage as i32,
-                miplevel as i32,
-                spec.0,
-            )
-        };
-
-        if exists {
-            Ok(spec)
-        } else {
-            Err(Error::SubimageNotFound)
-        }
-    }
-
     /// Returns the metadata of this image.
     pub fn spec(&self) -> &ImageSpec {
         unsafe { &*(sys::OIIO_ImageInput_spec(self.ptr) as *const ImageSpec) }
@@ -109,82 +67,112 @@ impl ImageInput {
         self.spec().depth()
     }
 
-    fn with_channels(&mut self, channels: Range<usize>) -> ImageChannelsInput {
-        let spec = self
-            .seek_subimage_mipmap(0, 0)
-            .expect("failed to seek to main image");
-        ImageChannelsInput {
-            img: self,
-            spec,
-            subimage: 0,
-            miplevel: 0,
-            channels,
-        }
+    /// Returns the range of all channels of this image.
+    /// Shorthand for `self.spec().all_channels()`.
+    pub fn all_channels(&self) -> Range<usize> {
+        self.spec().all_channels()
     }
 
-    /// Selects channels to read.
+    /// Returns the range of channel indices corresponding to the RGBA channels (in this order).
+    /// Shorthand for `self.spec().rgba_channels()`.
+    pub fn rgba_channels(&self) -> Result<Range<usize>, Error> {
+        self.spec().rgba_channels()
+    }
+
+    /// Returns the range of channels corresponding to the given channel names.
     ///
-    pub fn channels_by_name(
-        &mut self,
-        channel_names: &[&str],
-    ) -> Result<ImageChannelsInput, Error> {
-        Ok(self.with_channels(self.spec().channels_by_name(channel_names)?))
+    /// The specified channels must exist, must be in the same order as specified,
+    /// and must be contiguous. Otherwise, an error is returned.
+    ///
+    /// Shorthand for `self.spec().channels_by_name(channel_names)`.
+    pub fn channels_by_name(&self, channel_names: &[&str]) -> Result<Range<usize>, Error> {
+        self.spec().channels_by_name(channel_names)
     }
 
-    /// Selects channels.
-    pub fn channels(
-        &mut self,
-        channels: impl RangeBounds<usize>,
-    ) -> Result<ImageChannelsInput, Error> {
-        Ok(self.with_channels(self.spec().channel_range(channels)?))
-    }
+    pub fn read<T: ImageData>(
+        &self,
+        subimage: usize,
+        miplevel: usize,
+        channels: Range<usize>,
+    ) -> Result<ImageBuffer<T>, Error> {
+        let spec = self.spec();
+        let n = (spec.width() * spec.height() * spec.depth()) as usize * self.spec().num_channels();
 
-    /// Selects channels.
-    pub fn all_channels(&mut self) -> ImageChannelsInput {
-        self.with_channels(self.spec().all_channels())
-    }
+        let mut data: Vec<T> = Vec::with_capacity(n);
 
-    /// Selects channels.
-    pub fn rgba_channels(&mut self) -> Result<ImageChannelsInput, Error> {
-        Ok(self.with_channels(self.spec().rgba_channels()?))
-    }
+        unsafe {
+            self.read_unchecked(
+                subimage,
+                miplevel,
+                channels.clone(),
+                T::DESC,
+                data.as_mut_ptr() as *mut u8,
+                channels.len() * mem::size_of::<T>(),
+            )?;
+            data.set_len(n);
 
-    /// Selects channels.
-    pub fn alpha_channel(&mut self) -> Result<ImageChannelsInput, Error> {
-        let ch = self.spec().alpha_channel()?;
-        Ok(self.with_channels(ch..(ch + 1)))
-    }
-
-    /// Shorthand to read all the channels of the top mip level of the first subimage
-    /// into an [ImageBuffer].
-    pub fn read<I: ImageData>(&mut self) -> Result<ImageBuffer<I>, Error> {
-        self.all_channels().read()
-    }
-
-    pub fn read_into<T: ImageData>(&mut self, out: &mut [T]) -> Result<(), Error> {
-        self.all_channels().read_into(out)
-    }
-
-    pub fn read_tile<T: ImageData>(&mut self, x: i32, y: i32, z: i32, out: &mut [T]) -> Result<(), Error> {
-        let tile_size = {
-            let spec = self.spec();
-            spec.tile_width() * spec.tile_height() * spec.num_channels()
-        };
-        if tile_size == 0 {
-            // scanline image
-            return Err(Error::InvalidForImageType);
+            Ok(ImageBuffer {
+                width: self.width() as usize,
+                height: self.height() as usize,
+                depth: self.depth() as usize,
+                data,
+                num_channels: channels.len(),
+            })
         }
-        if tile_size > out.len() {
+    }
+
+    pub fn read_into<T: ImageData>(
+        &self,
+        subimage: usize,
+        miplevel: usize,
+        channels: Range<usize>,
+        out: &mut [T],
+    ) -> Result<(), Error> {
+        if self.spec().width() as usize
+            * self.spec().height() as usize
+            * self.spec().depth() as usize
+            > out.len()
+        {
             return Err(Error::BufferTooSmall);
         }
 
+        unsafe {
+            self.read_unchecked(
+                subimage,
+                miplevel,
+                channels.clone(),
+                T::DESC,
+                out.as_mut_ptr() as *mut u8,
+                channels.len() * mem::size_of::<T>(),
+            )
+        }
+    }
+
+    /// xstride: number of elements (T) to skip between pixels in a row
+    pub unsafe fn read_unchecked(
+        &self,
+        subimage: usize,
+        miplevel: usize,
+        channels: Range<usize>,
+        typedesc: TypeDesc,
+        out: *mut u8,
+        xstride: usize,
+    ) -> Result<(), Error> {
         let mut success = true;
-        success &= unsafe { openimageio_sys::OIIO_ImageInput_read_tile_format(
+
+        success &= sys::OIIO_ImageInput_read_image(
             self.ptr,
-            x, y, z,
-            T::DESC.0, out.as_mut_ptr() as *mut c_void,
-            sys::OIIO_AutoStride, sys::OIIO_AutoStride, sys::OIIO_AutoStride,
-        ) };
+            subimage as i32,
+            miplevel as i32,
+            channels.start as i32,
+            channels.end as i32,
+            typedesc.0,
+            out as *mut c_void,
+            xstride as isize,
+            sys::OIIO_AutoStride,
+            sys::OIIO_AutoStride,
+        );
+
         if success {
             Ok(())
         } else {
@@ -192,17 +180,90 @@ impl ImageInput {
         }
     }
 
-    pub fn read_scanline<T: ImageData>(&mut self, y: i32, z: i32, out: &mut [T]) -> Result<(), Error> {
+    pub fn read_tiles_into<T: ImageData>(
+        &self,
+        subimage: usize,
+        miplevel: usize,
+        x: Range<u32>,
+        y: Range<u32>,
+        z: Range<u32>,
+        channels: Range<usize>,
+        out: &mut [T],
+    ) -> Result<(), Error> {
+        let tile_size = {
+            let spec = self.spec();
+            spec.tile_width() as usize * spec.tile_height() as usize * spec.num_channels()
+        };
+        if tile_size == 0 {
+            // scanline image
+            return Err(Error::InvalidForImageType);
+        }
+        if x.len() * y.len() * z.len() * channels.len() > out.len() {
+            return Err(Error::BufferTooSmall);
+        }
+
+        let mut success = true;
+        success &= unsafe {
+            openimageio_sys::OIIO_ImageInput_read_tiles(
+                self.ptr,
+                subimage as i32,
+                miplevel as i32,
+                x.start as i32,
+                x.end as i32,
+                y.start as i32,
+                y.end as i32,
+                z.start as i32,
+                z.end as i32,
+                channels.start as i32,
+                channels.end as i32,
+                T::DESC.0,
+                out.as_mut_ptr() as *mut c_void,
+                sys::OIIO_AutoStride,
+                sys::OIIO_AutoStride,
+                sys::OIIO_AutoStride,
+            )
+        };
+        if success {
+            Ok(())
+        } else {
+            Err(Error::ReadError(self.get_last_error()))
+        }
+    }
+
+    pub fn read_scanlines_into<T: ImageData>(
+        &self,
+        subimage: usize,
+        miplevel: usize,
+        y: Range<u32>,
+        z: u32,
+        channels: Range<usize>,
+        out: &mut [T],
+    ) -> Result<(), Error> {
         if self.spec().tile_width() != 0 {
             // tile image
             return Err(Error::InvalidForImageType);
         }
-        let scanline_size = self.spec().width() * self.spec().num_channels() as u32;
+        let scanline_size = self.spec().width() * channels.len() as u32;
         if scanline_size > out.len() as u32 {
             return Err(Error::BufferTooSmall);
         }
         let mut success = true;
-        success &= unsafe { openimageio_sys::OIIO_ImageInput_read_scanline_format(self.ptr, y, z, T::DESC.0, out.as_mut_ptr() as *mut c_void, sys::OIIO_AutoStride) };
+        success &= unsafe {
+            openimageio_sys::OIIO_ImageInput_read_scanlines(
+                self.ptr,
+                subimage as i32,
+                miplevel as i32,
+                y.start as i32,
+                y.end as i32,
+                z as i32,
+                channels.start as i32,
+                channels.end as i32,
+                T::DESC.0,
+                out.as_mut_ptr() as *mut c_void,
+                sys::OIIO_AutoStride,
+                sys::OIIO_AutoStride,
+            )
+        };
         if success {
             Ok(())
         } else {
@@ -213,226 +274,6 @@ impl ImageInput {
     fn get_last_error(&self) -> String {
         unsafe { cstring_to_owned(sys::OIIO_ImageInput_geterror(self.ptr)) }
     }
-}
-
-/// A specific subimage and mip level of an ImageInput.
-pub struct SubimageMipmapInput<'a> {
-    img: &'a mut ImageInput,
-    spec: ImageSpecOwned,
-    subimage: usize,
-    miplevel: usize,
-}
-
-impl<'a> SubimageMipmapInput<'a> {
-    /// Returns the metadata of this subimage.
-    pub fn spec(&self) -> &ImageSpec {
-        &self.spec
-    }
-
-    /// Returns the width of this image.
-    ///
-    /// Equivalent to `spec().width()`.
-    pub fn width(&self) -> u32 {
-        self.spec().width()
-    }
-
-    /// Returns the width of this image.
-    ///
-    /// Equivalent to `spec().height()`.
-    pub fn height(&self) -> u32 {
-        self.spec().height()
-    }
-
-    /// Returns the width of this image.
-    ///
-    /// Equivalent to `spec().depth()`.
-    pub fn depth(&self) -> u32 {
-        self.spec().depth()
-    }
-
-    fn with_channels(self, channels: Range<usize>) -> ImageChannelsInput<'a> {
-        ImageChannelsInput {
-            img: self.img,
-            spec: self.spec,
-            subimage: self.subimage,
-            miplevel: self.miplevel,
-            channels,
-        }
-    }
-
-    /// Selects channels.
-    pub fn channels_by_name(self, channel_names: &[&str]) -> Result<ImageChannelsInput<'a>, Error> {
-        let channels = self.spec.channels_by_name(channel_names)?;
-        Ok(self.with_channels(channels))
-    }
-
-    /// Selects channels.
-    pub fn channels(
-        self,
-        channels: impl RangeBounds<usize>,
-    ) -> Result<ImageChannelsInput<'a>, Error> {
-        let channels = self.spec.channel_range(channels)?;
-        Ok(self.with_channels(channels))
-    }
-
-    /// Selects channels.
-    pub fn all_channels(self) -> ImageChannelsInput<'a> {
-        let channels = self.spec.all_channels();
-        self.with_channels(channels)
-    }
-
-    /// Selects channels.
-    pub fn rgba_channels(self) -> Result<ImageChannelsInput<'a>, Error> {
-        let channels = self.spec.rgba_channels()?;
-        Ok(self.with_channels(channels))
-    }
-
-    /// Selects channels.
-    pub fn channel_alpha(self) -> Result<ImageChannelsInput<'a>, Error> {
-        let ch = self.spec.alpha_channel()?;
-        Ok(self.with_channels(ch..(ch + 1)))
-    }
-
-    /// Shorthand to read all the channels into an [ImageBuffer].
-    pub fn read<I: ImageData>(self) -> Result<ImageBuffer<I>, Error> {
-        self.all_channels().read()
-    }
-    pub fn read_into<T: ImageData>(self, out: &mut [T]) -> Result<(), Error> {
-        self.all_channels().read_into(out)
-    }
-}
-
-/// A subimage, mip level and a set of channels selected from a parent image.
-///
-/// This type has methods to actually read the image data.
-pub struct ImageChannelsInput<'a> {
-    img: &'a mut ImageInput,
-    spec: ImageSpecOwned,
-    subimage: usize,
-    miplevel: usize,
-    channels: Range<usize>,
-}
-
-impl<'a> ImageChannelsInput<'a> {
-    /// Returns the metadata of this subimage.
-    pub fn spec(&self) -> &ImageSpec {
-        &self.spec
-    }
-
-    /// Returns the width of this image.
-    ///
-    /// Equivalent to `spec().width()`.
-    pub fn width(&self) -> u32 {
-        self.spec().width()
-    }
-
-    /// Returns the width of this image.
-    ///
-    /// Equivalent to `spec().height()`.
-    pub fn height(&self) -> u32 {
-        self.spec().height()
-    }
-
-    /// Returns the width of this image.
-    ///
-    /// Equivalent to `spec().depth()`.
-    pub fn depth(&self) -> u32 {
-        self.spec().depth()
-    }
-
-    /// Returns the index of this subimage in the parent [ImageInput].
-    pub fn subimage_index(&self) -> usize {
-        self.subimage
-    }
-
-    /// Returns the mip level of this subimage.
-    ///
-    /// 0 is the topmost and largest level. It is also the value returned if the image has no mipmap.
-    ///
-    /// A subimage is uniquely identified by its subimage index and mip level.
-    pub fn mip_level(&self) -> usize {
-        self.miplevel
-    }
-
-    /// Reads channels of the image to an [ImageBuffer].
-    pub fn read<T: ImageData>(&self) -> Result<ImageBuffer<T>, Error> {
-        let spec = self.spec();
-        let n = (spec.width() * spec.height() * spec.depth()) as usize * self.channels.len();
-
-        let mut data: Vec<T> = Vec::with_capacity(n);
-
-        unsafe {
-            self.read_unchecked(data.as_mut_ptr())?;
-            data.set_len(n);
-
-            Ok(ImageBuffer {
-                width: self.width() as usize,
-                height: self.height() as usize,
-                depth: self.depth() as usize,
-                data,
-                num_channels: self.channels.len(),
-            })
-        }
-    }
-
-    /// Reads channels into an existing buffer.
-    pub fn read_into<T: ImageData>(&self, out: &mut [T]) -> Result<(), Error> {
-        let spec = self.spec();
-        let n = (spec.width() * spec.height() * spec.depth()) as usize * self.channels.len();
-        if out.len() < n {
-            return Err(Error::BufferTooSmall);
-        }
-
-        unsafe { self.read_unchecked(out.as_mut_ptr()) }
-    }
-
-    unsafe fn read_unchecked<T: ImageData>(&self, out: *mut T) -> Result<(), Error> {
-        let mut success = true;
-
-        success &= sys::OIIO_ImageInput_read_image_format2(
-            self.img.ptr,
-            self.channels.start as i32,
-            self.channels.end as i32,
-            T::DESC.0,
-            out as *mut c_void,
-            (self.channels.len() * mem::size_of::<T>()) as isize,
-            sys::OIIO_AutoStride,
-            sys::OIIO_AutoStride,
-            ptr::null_mut(),
-        );
-
-        if success {
-            Ok(())
-        } else {
-            Err(Error::ReadError(self.img.get_last_error()))
-        }
-    }
-
-    /*unsafe fn read_unchecked_channel_ranges<T: ImageData>(&self, out: *mut T) -> Result<(), Error> {
-        let mut success = true;
-        let mut ich = 0;
-        for r in self.channels.ranges.iter() {
-            success &= sys::OIIO_ImageInput_read_image_format2(
-                self.img.ptr,
-                r.start as i32,
-                r.end as i32,
-                T::DESC.0,
-                out.offset(ich) as *mut c_void,
-                (self.channels.count * mem::size_of::<T>()) as isize,
-                sys::OIIO_AutoStride,
-                sys::OIIO_AutoStride,
-                ptr::null_mut(),
-            );
-
-            ich += r.len() as isize;
-        }
-
-        if success {
-            Ok(())
-        } else {
-            Err(Error::ReadError(self.img.get_last_error()))
-        }
-    }*/
 }
 
 impl Drop for ImageInput {

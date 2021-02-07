@@ -5,6 +5,7 @@ use std::{
     os::raw::{c_char, c_void},
     ptr,
 };
+use std::mem::MaybeUninit;
 
 pub unsafe trait AttributeType {
     const TYPEDESC: TypeDesc;
@@ -12,9 +13,9 @@ pub unsafe trait AttributeType {
     where
         Self: Sized,
     {
-        let mut v: Self = mem::uninitialized();
-        get(&mut v as *mut Self as *mut c_void)?;
-        Ok(v)
+        let mut v = MaybeUninit::uninit();
+        get(v.as_mut_ptr() as *mut c_void)?;
+        Ok(v.assume_init())
     }
 
     unsafe fn set(&self, set: impl Fn(*const c_void) -> Result<(), Error>) -> Result<(), Error> {

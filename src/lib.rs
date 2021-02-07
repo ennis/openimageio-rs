@@ -15,7 +15,7 @@ pub use error::Error;
 pub use input::ImageInput;
 pub use output::{ImageOutput, MultiImageOutput, SingleImageOutput};
 pub use spec::{Channel, ChannelDesc, ImageSpec, ImageSpecOwned};
-pub use typedesc::{Aggregate, BaseType, TypeDesc, VecSemantics, ImageData};
+pub use typedesc::{Aggregate, BaseType, ImageData, TypeDesc, VecSemantics};
 
 pub use cache::ImageCache;
 
@@ -40,85 +40,14 @@ mod tests {
     #[test]
     fn test_api() {
         let mut img = ImageInput::open("test_images/kazeharu.png").unwrap();
-
-        // members on imageinput
         img.spec();
         img.width();
         img.height();
         img.depth();
-        img.read::<f32>().unwrap();
-        img.all_channels();
-        img.channels(0..1).unwrap();
-        img.channels_by_name(&["R"]).unwrap();
-        img.rgba_channels().unwrap();
-        img.alpha_channel().unwrap();
-        img.all_channels().read::<f32>().unwrap();
-
-        // members on subimage
-        let sub = img.subimage(0).unwrap();
-        sub.spec();
-        sub.width();
-        sub.height();
-        sub.depth();
-        sub.read::<f32>().unwrap(); // consumes
-        img.subimage(0).unwrap().spec();
-        img.subimage(0).unwrap().width();
-        img.subimage(0).unwrap().height();
-        img.subimage(0).unwrap().depth();
-        img.subimage(0).unwrap().all_channels();
-        img.subimage(0).unwrap().channels(0..1).unwrap();
-        img.subimage(0).unwrap().channels_by_name(&["R"]).unwrap();
-        img.subimage(0).unwrap().rgba_channels().unwrap();
-        img.subimage(0).unwrap().channel_alpha().unwrap();
-        img.subimage(0).unwrap().read::<f32>().unwrap();
-        img.subimage(0)
-            .unwrap()
-            .all_channels()
-            .read::<f32>()
-            .unwrap();
-
-        // members on subimage (same as above, but through subimage+mipmap)
-        let sub = img.subimage_mipmap(0, 0).unwrap();
-        sub.spec();
-        sub.width();
-        sub.height();
-        sub.depth();
-        sub.read::<f32>().unwrap(); // consumes
-        img.subimage_mipmap(0, 0).unwrap().spec();
-        img.subimage_mipmap(0, 0).unwrap().width();
-        img.subimage_mipmap(0, 0).unwrap().height();
-        img.subimage_mipmap(0, 0).unwrap().depth();
-        img.subimage_mipmap(0, 0).unwrap().all_channels();
-        img.subimage_mipmap(0, 0).unwrap().channels(0..1).unwrap();
-        img.subimage_mipmap(0, 0)
-            .unwrap()
-            .channels_by_name(&["R"])
-            .unwrap();
-        img.subimage_mipmap(0, 0).unwrap().rgba_channels().unwrap();
-        img.subimage_mipmap(0, 0).unwrap().channel_alpha().unwrap();
-        img.subimage_mipmap(0, 0).unwrap().read::<f32>().unwrap();
-        img.subimage_mipmap(0, 0)
-            .unwrap()
-            .all_channels()
-            .read::<f32>()
-            .unwrap();
-
-        // members of SubimageMipmapChannels
-        let chan = img.subimage_mipmap(0, 0).unwrap().all_channels();
-        chan.spec();
-        chan.width();
-        chan.height();
-        chan.depth();
-        chan.read::<f32>().unwrap(); // consumes
-        img.subimage_mipmap(0, 0).unwrap().all_channels().spec();
-        img.subimage_mipmap(0, 0).unwrap().all_channels().width();
-        img.subimage_mipmap(0, 0).unwrap().all_channels().height();
-        img.subimage_mipmap(0, 0).unwrap().all_channels().depth();
-        img.subimage_mipmap(0, 0)
-            .unwrap()
-            .all_channels()
-            .read::<f32>()
-            .unwrap();
+        img.read::<f32>(0, 0, img.all_channels()).unwrap();
+        img.spec().channels_by_name(&["R"]).unwrap();
+        img.spec().rgba_channels().unwrap();
+        img.spec().alpha_channel().unwrap();
     }
 
     #[test]
@@ -133,11 +62,12 @@ mod tests {
         // reading all scanlines should be the same as reading the whole image
         let mut all_scanlines: Vec<u8> = Vec::new();
         for y in 0..img.spec().height() {
-            img.read_scanline(y as i32, 0, &mut img_data).unwrap();
+            img.read_scanlines_into(0, 0, y..y + 1, 0, img.all_channels(), &mut img_data)
+                .unwrap();
             all_scanlines.extend(img_data.clone().iter());
         }
 
-        let whole_img: ImageBuffer<u8> = img.read().unwrap();
+        let whole_img: ImageBuffer<u8> = img.read(0, 0, img.all_channels()).unwrap();
         assert_eq!(all_scanlines, whole_img.data);
     }
 
@@ -145,7 +75,7 @@ mod tests {
     fn write_image_scanline() {
         // scanline based png
         let mut img = ImageInput::open("test_images/kazeharu.png").unwrap();
-        let data: ImageBuffer<u8> = img.read().unwrap();
+        let data: ImageBuffer<u8> = img.read(0, 0, img.all_channels()).unwrap();
 
         let mut out = ImageOutput::create("kazeharu.png").unwrap();
         let mut out = out.open(&img.spec()).unwrap();
@@ -155,20 +85,28 @@ mod tests {
         let mut out2 = out2.open(&img.spec()).unwrap();
         let row_width: usize = data.width * data.num_channels;
         for y in 0..data.height() as usize {
-            out2.write_scanline(y as i32, 0, &data.data[(y * row_width)..((y + 1) * row_width)]).unwrap();
+            out2.write_scanline(
+                y as i32,
+                0,
+                &data.data[(y * row_width)..((y + 1) * row_width)],
+            )
+            .unwrap();
         }
 
         // Written image should be identical
         fn file_contents(f: &str) -> Vec<u8> {
-            use std::io::Read;
             use std::fs::File;
+            use std::io::Read;
             let mut file = File::open(f).unwrap();
             let mut res = Vec::new();
             file.read_to_end(&mut res).unwrap();
             res
         }
 
-        assert_eq!(file_contents("kazeharu.png"), file_contents("kazeharu_scanline.png"));
+        assert_eq!(
+            file_contents("kazeharu.png"),
+            file_contents("kazeharu_scanline.png")
+        );
     }
 
     #[test]
@@ -177,20 +115,33 @@ mod tests {
         assert!(img.spec().tile_width() > 0);
         // read first tile, verify it matches the same data of the whole image read with 'read()'
         let mut tiled_data: Vec<u8> = Vec::new();
-        tiled_data.resize(img.spec().tile_width() * img.spec().tile_height() * img.spec().num_channels(), 0);
-        img.read_tile(0, 0, 0, &mut tiled_data).unwrap();
+        tiled_data.resize(
+            img.spec().tile_width() as usize * img.spec().tile_height() as usize * img.spec().num_channels(),
+            0,
+        );
+        img.read_tiles_into(
+            0,
+            0,
+            0..img.spec().tile_width(),
+            0..img.spec().tile_height(),
+            0..img.spec().tile_depth(),
+            img.all_channels(),
+            &mut tiled_data,
+        )
+        .unwrap();
 
-        let mut whole_img: ImageBuffer<u8> = img.read().unwrap();
+        let mut whole_img: ImageBuffer<u8> = img.read(0, 0, img.all_channels()).unwrap();
 
         assert!(whole_img.data().len() > tiled_data.len());
-        // Manually split out the specific tile we read from the whole image 
-        let tile_from_whole_img: Vec<u8> = 
-            whole_img.data
+        // Manually split out the specific tile we read from the whole image
+        let tile_from_whole_img: Vec<u8> = whole_img
+            .data
             .chunks_mut(img.spec().width() as usize * img.spec().num_channels()) // image rows
             .map(|chunk| {
-                chunk[0..(img.spec().tile_width() * img.spec().num_channels())].to_vec() // chop down to tile width
+                chunk[0..(img.spec().tile_width() as usize * img.spec().num_channels())].to_vec()
+                // chop down to tile width
             })
-            .take(img.spec().tile_height()) // chop down to tile height
+            .take(img.spec().tile_height() as usize) // chop down to tile height
             .flatten() // re-merge chunks
             .collect();
 
@@ -210,7 +161,9 @@ mod tests {
             "RenderLayer.DiffCol.B",
         ];
         let size = (img.width(), img.height());
-        let data: ImageBuffer<f32> = img.channels_by_name(channel_names).unwrap().read().unwrap();
+        let data: ImageBuffer<f32> = img
+            .read(0, 0, img.channels_by_name(channel_names).unwrap())
+            .unwrap();
         let spec = ImageSpecOwned::new_2d(TypeDesc::FLOAT, size.0, size.1, &["R", "G", "B"]);
         let mut out = ImageOutput::create("output.exr").unwrap();
         let mut out = out.open(&spec).unwrap();
@@ -221,7 +174,7 @@ mod tests {
     fn open_image_png() {
         let mut img = ImageInput::open("test_images/kazeharu.png").unwrap();
         let size = (img.width(), img.height());
-        let data = img.rgba_channels().unwrap().read::<f32>().unwrap();
+        let data = img.read::<f32>(0, 0, img.rgba_channels().unwrap()).unwrap();
         let spec = ImageSpecOwned::new_2d(TypeDesc::FLOAT, size.0, size.1, &["R", "G", "B", "A"]);
         let mut out = ImageOutput::create("kazeharu.exr").unwrap();
         let mut out = out.open(&spec).unwrap();
@@ -492,5 +445,4 @@ mod tests {
             img.subimage(0).unwrap().all_channels();
         }*/
     }
-
 }

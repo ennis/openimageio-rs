@@ -59,7 +59,7 @@ pub enum VecSemantics {
 
 /// Data type descriptions.
 #[repr(transparent)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct TypeDesc(pub(crate) sys::OIIO_TypeDesc);
 
 impl TypeDesc {

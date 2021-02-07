@@ -4,13 +4,15 @@ extern crate pkg_config;
 extern crate vcpkg;
 
 use std::{env, error::Error, path::PathBuf};
+use std::path::Path;
 
 fn main() {
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+
     let mut found_oiio = false;
     let mut include_paths = Vec::new();
-    env::set_var("VCPKGRS_DYNAMIC", "1");
-    // try vcpkg on windows
-    eprintln!("trying to detect/fetch OpenImageIO through vcpkg...");
+
+    eprintln!("trying to detect/fetch OpenImageIO via vcpkg...");
 
     let lib = vcpkg::find_package("openimageio");
     match lib {
@@ -39,8 +41,10 @@ fn main() {
                 eprintln!("-> libs: {:?}", lib.libs);
                 eprintln!("-> link paths: {:?}", lib.link_paths);
                 eprintln!("-> include paths: {:?}", lib.include_paths);
+                eprintln!("-> defines: {:?}", lib.defines);
                 found_oiio = true;
                 include_paths = lib.include_paths;
+
             }
             Err(err) => {
                 eprintln!("ERROR: {}", err);
@@ -61,6 +65,8 @@ fn main() {
             .header("src/glue/oiio.h")
             .clang_arg("-v")
             .derive_copy(true)
+            .derive_eq(true)
+            .size_t_is_usize(true)
             .with_codegen_config(
                 bindgen::CodegenConfig::TYPES
                     | bindgen::CodegenConfig::FUNCTIONS
@@ -102,6 +108,11 @@ fn main() {
     for p in include_paths {
         build.include(p);
     }
+    // fix for OpenImageIO: usage of CommandLineToArgvW requires shell32
+    if target_os == "windows" {
+        println!("cargo:rustc-link-lib=shell32")
+    }
+    build.define("OIIO_STATIC_DEFINE", None);
     build.cpp(true);
     build.flag("-std=c++11");
     build.compile("glue");

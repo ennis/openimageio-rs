@@ -192,24 +192,36 @@ impl ImageSpec {
         )
     }
 
-    pub fn tile_width(&self) -> usize {
-        unsafe { sys::OIIO_ImageSpec_tile_width(&self.0) as usize }
+    pub fn tile_width(&self) -> u32 {
+        unsafe { sys::OIIO_ImageSpec_tile_width(&self.0) as u32 }
     }
 
-    pub fn tile_height(&self) -> usize {
-        unsafe { sys::OIIO_ImageSpec_tile_height(&self.0) as usize }
+    pub fn tile_height(&self) -> u32 {
+        unsafe { sys::OIIO_ImageSpec_tile_height(&self.0) as u32 }
     }
 
-    pub fn tile_depth(&self) -> usize {
-        unsafe { sys::OIIO_ImageSpec_tile_depth(&self.0) as usize }
+    pub fn tile_depth(&self) -> u32 {
+        unsafe { sys::OIIO_ImageSpec_tile_depth(&self.0) as u32 }
     }
 
-    /// (OpenImageIO:) The number of channels (color values) present in each pixel of the image.
+    /// (OpenImageIO) The number of channels (color values) present in each pixel of the image.
     ///
     /// For example, an RGB image has 3 channels.
     pub fn num_channels(&self) -> usize {
         unsafe { sys::OIIO_ImageSpec_nchannels(&self.0) as usize }
     }
+
+    /// (OpenImageIO) Data format of the channels.
+    ///
+    /// Describes the native format of the pixel data values themselves, as a TypeDesc.
+    /// Typical values would be TypeDesc::UINT8 for 8-bit unsigned values, TypeDesc::FLOAT for 32-bit floating-point values, etc.
+    ///
+    /// If channels have different formats, then this will indicate a single default data format
+    /// for applications that don’t wish to support per-channel formats (usually this will be the format of the channel that has the most precision).
+    pub fn format(&self) -> TypeDesc {
+        unsafe { TypeDesc(sys::OIIO_ImageSpec_format(&self.0)) }
+    }
+
 
     /// Returns an iterator over the descriptions of the channels of the image.
     pub fn channels<'a>(&'a self) -> impl Iterator<Item = Channel> + 'a {

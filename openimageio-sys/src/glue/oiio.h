@@ -98,22 +98,33 @@ bool OIIO_ImageInput_supports(const OIIO_ImageInput *in, OIIO_StringRef feature)
 bool OIIO_ImageInput_close(OIIO_ImageInput *in);
 int OIIO_ImageInput_current_subimage(const OIIO_ImageInput *in);
 int OIIO_ImageInput_current_miplevel(const OIIO_ImageInput *in);
-bool OIIO_ImageInput_seek_subimage(OIIO_ImageInput *in, int subimage, OIIO_ImageSpec *newspec);
-bool OIIO_ImageInput_seek_subimage_miplevel(OIIO_ImageInput *in, int subimage, int miplevel,
-                                            OIIO_ImageSpec *newspec);
-// bool OIIO_ImageInput_read_scanline_floats(OIIO_ImageInput *in, int y, int z, float *data);
-bool OIIO_ImageInput_read_scanline_format(OIIO_ImageInput *in, int y, int z, OIIO_TypeDesc format,
-                                          void *data, stride_t xstride);
+
+// bool OIIO_ImageInput_seek_subimage(OIIO_ImageInput *in, int subimage, OIIO_ImageSpec *newspec);
+// bool OIIO_ImageInput_seek_subimage_miplevel(OIIO_ImageInput *in, int subimage, int miplevel,
+//                                            OIIO_ImageSpec *newspec);
+bool OIIO_ImageInput_read_scanlines(OIIO_ImageInput *in, int subimage, int miplevel, int ybegin,
+                                    int yend, int z, int chbegin, int chend, OIIO_TypeDesc format,
+                                    void *data, stride_t xstride, stride_t ystride);
+
+bool OIIO_ImageInput_read_image(OIIO_ImageInput *in, int subimage, int miplevel, int chbegin,
+                                int chend, OIIO_TypeDesc format, void *data, stride_t xstride,
+                                stride_t ystride, stride_t zstride);
+
+bool OIIO_ImageInput_read_tiles(OIIO_ImageInput *in, int subimage, int miplevel, int xbegin,
+                                int xend, int ybegin, int yend, int zbegin, int zend, int chbegin,
+                                int chend, OIIO_TypeDesc format, void *data, stride_t xstride,
+                                stride_t ystride, stride_t zstride);
+
 // bool OIIO_ImageInput_read_tile_floats(OIIO_ImageInput *in, int x, int y, int z, float *data);
-bool OIIO_ImageInput_read_tile_format(OIIO_ImageInput *in, int x, int y, int z,
-                                      OIIO_TypeDesc format, void *data, stride_t xstride,
-                                      stride_t ystride, stride_t zstride);
-bool OIIO_ImageInput_read_image_floats(OIIO_ImageInput *in, float *data);
-bool OIIO_ImageInput_read_image_format(OIIO_ImageInput *in, OIIO_TypeDesc format, void *data,
+// bool OIIO_ImageInput_read_tile_format(OIIO_ImageInput *in, int x, int y, int z,
+//                                      OIIO_TypeDesc format, void *data, stride_t xstride,
+//                                      stride_t ystride, stride_t zstride);
+// bool OIIO_ImageInput_read_image_floats(OIIO_ImageInput *in, float *data);
+/*bool OIIO_ImageInput_read_image_format(OIIO_ImageInput *in, OIIO_TypeDesc format, void *data,
                                        void *cbk_data);
 bool OIIO_ImageInput_read_image_format2(OIIO_ImageInput *in, int chbegin, int chend,
                                         OIIO_TypeDesc format, void *data, stride_t xstride,
-                                        stride_t ystride, stride_t zstride, void *cbk_data);
+                                        stride_t ystride, stride_t zstride, void *cbk_data);*/
 const char *OIIO_ImageInput_geterror(const OIIO_ImageInput *in);
 
 // bool ImageInput_read_native_scanline(OIIO_ImageInput *in, int y, int z, void *data);
