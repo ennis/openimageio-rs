@@ -222,7 +222,6 @@ impl ImageSpec {
         unsafe { TypeDesc(sys::OIIO_ImageSpec_format(&self.0)) }
     }
 
-
     /// Returns an iterator over the descriptions of the channels of the image.
     pub fn channels<'a>(&'a self) -> impl Iterator<Item = Channel> + 'a {
         let nch = self.num_channels();

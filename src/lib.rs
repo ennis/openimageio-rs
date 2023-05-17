@@ -116,7 +116,9 @@ mod tests {
         // read first tile, verify it matches the same data of the whole image read with 'read()'
         let mut tiled_data: Vec<u8> = Vec::new();
         tiled_data.resize(
-            img.spec().tile_width() as usize * img.spec().tile_height() as usize * img.spec().num_channels(),
+            img.spec().tile_width() as usize
+                * img.spec().tile_height() as usize
+                * img.spec().num_channels(),
             0,
         );
         img.read_tiles_into(

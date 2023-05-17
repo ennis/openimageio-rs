@@ -1,17 +1,10 @@
 use crate::{
     cstring_to_owned, error::get_last_error, typedesc::ImageData, Error, ImageBuffer, ImageSpec,
-    ImageSpecOwned, TypeDesc,
+    TypeDesc,
 };
 use openimageio_sys as sys;
 use openimageio_sys::AsStringRef;
-use std::convert::TryInto;
-use std::{
-    ffi::c_void,
-    mem,
-    ops::{Range, RangeBounds},
-    path::Path,
-    ptr,
-};
+use std::{ffi::c_void, mem, ops::Range, path::Path, ptr};
 
 /// Image file opened for input.
 ///

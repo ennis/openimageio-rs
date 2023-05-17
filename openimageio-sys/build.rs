@@ -3,8 +3,7 @@ extern crate cc;
 extern crate pkg_config;
 extern crate vcpkg;
 
-use std::{env, error::Error, path::PathBuf};
-use std::path::Path;
+use std::{env, path::PathBuf};
 
 fn main() {
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
@@ -44,7 +43,6 @@ fn main() {
                 eprintln!("-> defines: {:?}", lib.defines);
                 found_oiio = true;
                 include_paths = lib.include_paths;
-
             }
             Err(err) => {
                 eprintln!("ERROR: {}", err);
@@ -114,6 +112,10 @@ fn main() {
     }
     build.define("OIIO_STATIC_DEFINE", None);
     build.cpp(true);
-    build.flag("-std=c++11");
+    //if build.get_compiler().is_like_msvc() {
+    //    build.flag("/std:c++17");
+    //} else {
+        build.flag("-std=c++17");
+    //}
     build.compile("glue");
 }

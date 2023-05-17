@@ -1,11 +1,10 @@
 use crate::{Error, TypeDesc};
+use std::mem::MaybeUninit;
 use std::{
     ffi::{CStr, CString},
-    mem,
     os::raw::{c_char, c_void},
     ptr,
 };
-use std::mem::MaybeUninit;
 
 pub unsafe trait AttributeType {
     const TYPEDESC: TypeDesc;

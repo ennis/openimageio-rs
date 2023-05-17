@@ -1,6 +1,6 @@
 #include "helpers.hpp"
 #include "oiio.h"
-#include <OpenImageIO/imagebuf.h>
+#include <OpenImageIO/imagecache.h>
 #include <string>
 
 extern "C" {

@@ -38,7 +38,7 @@ impl fmt::Display for Error {
             }
             Error::InvalidChannelIndex => write!(f, "non-existent channel index"),
             Error::BufferTooSmall => write!(f, "buffer was too small"),
-            Error::InvalidForImageType=> write!(f, "image type did not support operation"),
+            Error::InvalidForImageType => write!(f, "image type did not support operation"),
             //_ => write!(f, "Unknown error."),
         }
     }

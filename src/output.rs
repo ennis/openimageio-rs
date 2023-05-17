@@ -2,7 +2,7 @@
 use crate::{cstring_to_owned, error::get_last_error, typedesc::ImageData, Error, ImageSpec};
 use openimageio_sys as sys;
 use openimageio_sys::AsStringRef;
-use std::{ffi::c_void, path::Path};
+use std::{ffi::c_void, io, path::Path};
 
 ///
 pub struct ImageOutput {
@@ -22,9 +22,7 @@ impl ImageOutput {
     pub fn create<P: AsRef<Path>>(path: P) -> Result<ImageOutput, Error> {
         let path = path.as_ref().to_str().unwrap();
         let plugin_search_path = "";
-        let ptr = unsafe {
-            sys::OIIO_ImageOutput_create(path.as_stringref(), plugin_search_path.as_stringref())
-        };
+        let ptr = unsafe { sys::OIIO_ImageOutput_create(path.as_stringref(), plugin_search_path.as_stringref()) };
 
         if ptr.is_null() {
             return Err(Error::OpenError(get_last_error()));
